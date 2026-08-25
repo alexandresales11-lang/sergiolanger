@@ -71,8 +71,30 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
     onSendMessage(client.id, newMsg);
     if (!customText) setInputMessage('');
 
-    // Trigger WhatsApp Web / App sync for real transmission if requested
-    if (openWhatsAppApp) {
+    // Check if Evolution API credentials exist
+    const evoUrl = localStorage.getItem('evolution_api_url');
+    const evoKey = localStorage.getItem('evolution_api_key');
+    const evoInstance = localStorage.getItem('evolution_instance_name');
+
+    if (evoUrl && evoKey && evoInstance) {
+      try {
+        // Send via Evolution API in the background
+        fetch('/api/whatsapp/evolution/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiUrl: evoUrl,
+            apiKey: evoKey,
+            instanceName: evoInstance,
+            number: client.phone,
+            text: textToSend.trim(),
+          }),
+        }).catch((err) => console.warn('Falha background Evolution API:', err));
+      } catch (err) {
+        console.warn('Erro ao disparar Evolution API:', err);
+      }
+    } else if (openWhatsAppApp) {
+      // If Evolution API not configured yet, open WhatsApp Web/App
       const cleanPhone = client.phone.replace(/\D/g, '');
       const encodedText = encodeURIComponent(textToSend.trim());
       const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;

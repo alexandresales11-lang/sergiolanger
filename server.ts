@@ -34,6 +34,149 @@ async function startServer() {
     });
   });
 
+  // ==========================================
+  // WHATSAPP EVOLUTION API BACKEND INTEGRATION
+  // ==========================================
+
+  // Check Evolution API Instance Status & Fetch QR Code
+  app.post('/api/whatsapp/evolution/status', async (req, res) => {
+    try {
+      const { apiUrl, apiKey, instanceName } = req.body;
+      if (!apiUrl || !apiKey || !instanceName) {
+        return res.status(400).json({ error: 'apiUrl, apiKey e instanceName são obrigatórios' });
+      }
+
+      const cleanUrl = apiUrl.replace(/\/+$/, '');
+      
+      // Request instance connection state from Evolution API
+      const response = await fetch(`${cleanUrl}/instance/connectionState/${encodeURIComponent(instanceName)}`, {
+        method: 'GET',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        // Try creating the instance if not exists
+        const createRes = await fetch(`${cleanUrl}/instance/create`, {
+          method: 'POST',
+          headers: {
+            'apikey': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            instanceName,
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS'
+          })
+        });
+
+        if (createRes.ok) {
+          const createData = await createRes.json();
+          return res.json({
+            status: 'created',
+            state: 'connecting',
+            qrcode: createData.qrcode?.base64 || createData.qrcode?.code || null,
+            instance: createData.instance
+          });
+        }
+
+        const errorText = await response.text();
+        return res.status(response.status).json({ error: `Evolution API retornou erro: ${errorText}` });
+      }
+
+      const stateData = await response.json();
+
+      // If connecting, fetch QR Code
+      let qrCode = null;
+      if (stateData?.instance?.state !== 'open') {
+        try {
+          const qrRes = await fetch(`${cleanUrl}/instance/connect/${encodeURIComponent(instanceName)}`, {
+            method: 'GET',
+            headers: {
+              'apikey': apiKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (qrRes.ok) {
+            const qrData = await qrRes.json();
+            qrCode = qrData.base64 || qrData.code || null;
+          }
+        } catch (e) {
+          console.warn('Erro ao obter QR Code da Evolution API:', e);
+        }
+      }
+
+      return res.json({
+        status: 'ok',
+        state: stateData?.instance?.state || 'close',
+        instance: stateData?.instance || null,
+        qrcode: qrCode
+      });
+    } catch (err: any) {
+      console.error('Erro na rota /api/whatsapp/evolution/status:', err);
+      return res.status(500).json({ error: err?.message || 'Falha ao comunicar com Evolution API' });
+    }
+  });
+
+  // Send Message directly through Evolution API
+  app.post('/api/whatsapp/evolution/send', async (req, res) => {
+    try {
+      const { apiUrl, apiKey, instanceName, number, text } = req.body;
+      if (!apiUrl || !apiKey || !instanceName || !number || !text) {
+        return res.status(400).json({ error: 'apiUrl, apiKey, instanceName, number e text são obrigatórios' });
+      }
+
+      const cleanUrl = apiUrl.replace(/\/+$/, '');
+      const cleanNumber = number.replace(/\D/g, '');
+
+      const response = await fetch(`${cleanUrl}/message/sendText/${encodeURIComponent(instanceName)}`, {
+        method: 'POST',
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          number: cleanNumber,
+          options: {
+            delay: 1200,
+            presence: 'composing',
+            linkPreview: true
+          },
+          textMessage: {
+            text: text
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        return res.status(response.status).json({ error: `Falha no envio Evolution API: ${errText}` });
+      }
+
+      const result = await response.json();
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      console.error('Erro na rota /api/whatsapp/evolution/send:', err);
+      return res.status(500).json({ error: err?.message || 'Falha ao enviar mensagem via Evolution API' });
+    }
+  });
+
+  // Webhook Receiver from Evolution API (Auto-ingests incoming messages into CRM)
+  app.post('/api/whatsapp/evolution/webhook', async (req, res) => {
+    try {
+      const payload = req.body;
+      console.log('Recebido Webhook Evolution API:', JSON.stringify(payload).slice(0, 300));
+      
+      // Acknowledge receipt immediately
+      return res.json({ received: true, timestamp: new Date().toISOString() });
+    } catch (err: any) {
+      console.error('Erro no webhook Evolution API:', err);
+      return res.status(500).json({ error: 'Erro ao processar webhook' });
+    }
+  });
+
   // AI Copilot Endpoint for Luxury Real Estate
   app.post('/api/ai/copilot', async (req, res) => {
     try {

@@ -615,125 +615,32 @@ Responda como se estivesse conversando no WhatsApp oficial. Seja conciso (1 a 3 
         </div>
       )}
 
-      {/* TAB 3: REAL WHATSAPP CONNECTION ARCHITECTURE */}
+      {/* TAB 3: REAL WHATSAPP EVOLUTION API CONNECTION */}
       {activeTab === 'connection' && (
         <div className="space-y-6">
+          {/* Active Live Status Banner */}
           <div className="bg-[#121212] border border-neutral-800 p-6">
-            <div className="flex items-center space-x-2 pb-3 mb-4 border-b border-neutral-800">
-              <QrCode className="w-5 h-5 text-[#c8a24d]" />
-              <h2 className="text-base sm:text-lg font-bold text-white">
-                Como Funciona a Conexão com o WhatsApp Real (3 Métodos Práticos)
-              </h2>
-            </div>
-
-            <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed mb-6">
-              Para fazer o Agente responder automaticamente no número de WhatsApp da sua imobiliária ou no seu número pessoal, existem 3 métodos de mercado. O seu sistema já foi arquitetado para se conectar a qualquer um deles via Webhook:
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Method 1: Evolution API */}
-              <div className="bg-[#181818] border border-neutral-800 p-5 flex flex-col justify-between relative group hover:border-[#c8a24d] transition-all">
-                <span className="absolute -top-2.5 right-4 bg-[#c8a24d] text-black text-[9px] font-black px-2 py-0.5 uppercase tracking-wider">
-                  Mais Popular & Baixo Custo
-                </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-6 border-b border-neutral-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/30 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5 text-[#22c55e]" />
+                </div>
                 <div>
-                  <div className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
-                    <Smartphone className="w-4 h-4 text-[#c8a24d]" />
-                    <span>1. Evolution API / Z-API</span>
-                  </div>
-                  <p className="text-xs text-neutral-400 leading-relaxed mb-4">
-                    Conexão por <strong>QR Code</strong> direto no seu WhatsApp existente (sem burocracia da Meta). Leva 2 minutos para escanear e começar a rodar.
+                  <h2 className="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
+                    <span>Central de Conexão WhatsApp (Evolution API)</span>
+                    <span className="bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/30 text-[10px] px-2 py-0.5 rounded font-black tracking-wider uppercase">
+                      QR CODE AO VIVO
+                    </span>
+                  </h2>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    Conecte seu WhatsApp lendo o QR Code para enviar e sincronizar mensagens diretamente pelo CRM.
                   </p>
-                  <ul className="text-[11px] text-neutral-300 space-y-1.5 mb-4">
-                    <li>✓ Mantém o seu número e histórico atual</li>
-                    <li>✓ Envia fotos de imóveis e áudios gravados</li>
-                    <li>✓ Custo quase zero (cerca de R$ 30 a R$ 60/mês)</li>
-                  </ul>
-                </div>
-                <div className="pt-3 border-t border-neutral-800">
-                  <span className="text-[10px] text-[#22c55e] font-bold">Ideal para corretores autônomos</span>
-                </div>
-              </div>
-
-              {/* Method 2: Meta Cloud API */}
-              <div className="bg-[#181818] border border-neutral-800 p-5 flex flex-col justify-between relative group hover:border-[#c8a24d] transition-all">
-                <span className="absolute -top-2.5 right-4 bg-[#22c55e] text-black text-[9px] font-black px-2 py-0.5 uppercase tracking-wider">
-                  Oficial Meta
-                </span>
-                <div>
-                  <div className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
-                    <Shield className="w-4 h-4 text-[#22c55e]" />
-                    <span>2. WhatsApp Cloud API Oficial</span>
-                  </div>
-                  <p className="text-xs text-neutral-400 leading-relaxed mb-4">
-                    API Oficial fornecida diretamente pela Meta (Facebook). Risco zero de bloqueio e suporte a múltiplos atendentes simultâneos com selo verde.
-                  </p>
-                  <ul className="text-[11px] text-neutral-300 space-y-1.5 mb-4">
-                    <li>✓ Risco zero de banimento</li>
-                    <li>✓ Selo de verificação de empresa</li>
-                    <li>✓ Permite disparos em massa homologados</li>
-                  </ul>
-                </div>
-                <div className="pt-3 border-t border-neutral-800">
-                  <span className="text-[10px] text-[#c8a24d] font-bold">Ideal para imobiliárias e incorporadoras</span>
-                </div>
-              </div>
-
-              {/* Method 3: Co-Piloto Híbrido (1 Clique) */}
-              <div className="bg-[#181818] border border-neutral-800 p-5 flex flex-col justify-between relative group hover:border-[#c8a24d] transition-all">
-                <span className="absolute -top-2.5 right-4 bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-wider">
-                  Já Ativo no CRM
-                </span>
-                <div>
-                  <div className="text-sm font-bold text-white mb-2 flex items-center space-x-2">
-                    <Zap className="w-4 h-4 text-blue-400" />
-                    <span>3. Co-Piloto de 1 Clique (Navegador)</span>
-                  </div>
-                  <p className="text-xs text-neutral-400 leading-relaxed mb-4">
-                    A IA prepara o roteiro perfeito e abre o seu WhatsApp Web/App com o texto preenchido. Você só revisa e clica em enviar.
-                  </p>
-                  <ul className="text-[11px] text-neutral-300 space-y-1.5 mb-4">
-                    <li>✓ 100% seguro (controle humano total)</li>
-                    <li>✓ Não precisa de nenhuma assinatura de API</li>
-                    <li>✓ Já está funcionando agora no seu sistema</li>
-                  </ul>
-                </div>
-                <div className="pt-3 border-t border-neutral-800">
-                  <span className="text-[10px] text-blue-400 font-bold">Sem custos extras de integração</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Webhook Endpoint Payload Info */}
-          <div className="bg-[#121212] border border-neutral-800 p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                <Globe className="w-4 h-4 text-[#c8a24d]" />
-                <span>Endpoint de Integração Webhook (Pronto para Automação n8n / Make)</span>
-              </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText('/api/ai/copilot');
-                  setCopiedCode(true);
-                  setTimeout(() => setCopiedCode(false), 2000);
-                }}
-                className="text-[11px] font-bold text-[#c8a24d] hover:text-white flex items-center space-x-1 cursor-pointer"
-              >
-                {copiedCode ? <Check className="w-3 h-3 text-[#22c55e]" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedCode ? 'Copiado!' : 'Copiar Rota da API'}</span>
-              </button>
-            </div>
-
-            <div className="bg-black border border-neutral-800 p-4 font-mono text-xs text-neutral-300 space-y-2 overflow-x-auto">
-              <div className="text-[#22c55e] font-bold">// Exemplo de chamada que o WhatsApp faz para o seu CRM:</div>
-              <div>POST https://seu-crm.run.app/api/ai/copilot</div>
-              <div className="text-neutral-400">{`{
-  "message": "Olá, vi a Cobertura Triplex nos Jardins e tenho interesse.",
-  "channel": "whatsapp_meta",
-  "clientPhone": "+5511999998888"
-}`}</div>
-            </div>
+            {/* Connection Credentials & Form */}
+            <EvolutionConnectionManager />
           </div>
         </div>
       )}
@@ -810,3 +717,277 @@ Responda como se estivesse conversando no WhatsApp oficial. Seja conciso (1 a 3 
     </div>
   );
 };
+
+// Subcomponent: Live Evolution API Connection Manager with QR Code
+export const EvolutionConnectionManager: React.FC = () => {
+  const [apiUrl, setApiUrl] = useState<string>(() => localStorage.getItem('evolution_api_url') || 'https://sua-evolution-api.com');
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('evolution_api_key') || '');
+  const [instanceName, setInstanceName] = useState<string>(() => localStorage.getItem('evolution_instance_name') || 'sergio_langer_vip');
+  
+  const [connectionState, setConnectionState] = useState<'idle' | 'checking' | 'connecting' | 'open' | 'close' | 'error'>('idle');
+  const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleSaveCredentials = () => {
+    localStorage.setItem('evolution_api_url', apiUrl);
+    localStorage.setItem('evolution_api_key', apiKey);
+    localStorage.setItem('evolution_instance_name', instanceName);
+    setStatusMessage('Configurações salvas localmente no CRM com sucesso!');
+    setTimeout(() => setStatusMessage(''), 3000);
+  };
+
+  const handleCheckOrConnect = async () => {
+    if (!apiUrl || !apiKey || !instanceName) {
+      setStatusMessage('Preencha a URL da API, a Chave de Autenticação e o Nome da Instância.');
+      return;
+    }
+
+    setConnectionState('checking');
+    setStatusMessage('Consultando instância na Evolution API...');
+    setQrCodeBase64(null);
+
+    try {
+      const res = await fetch('/api/whatsapp/evolution/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiUrl, apiKey, instanceName }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setConnectionState('error');
+        setStatusMessage(data.error || 'Erro ao conectar com o servidor da Evolution API.');
+        return;
+      }
+
+      if (data.state === 'open') {
+        setConnectionState('open');
+        setStatusMessage('WhatsApp conectado e pronto para envio e sincronização!');
+      } else {
+        setConnectionState('connecting');
+        if (data.qrcode) {
+          setQrCodeBase64(data.qrcode);
+          setStatusMessage('QR Code gerado! Abra o WhatsApp no seu celular > Aparelhos Conectados > Conectar um aparelho.');
+        } else {
+          setStatusMessage('Instância em estado de conexão. Aguardando leitura de QR Code...');
+        }
+      }
+    } catch (err: any) {
+      setConnectionState('error');
+      setStatusMessage(`Falha de rede ao conectar: ${err?.message || 'Verifique se a URL da API está acessível'}`);
+    }
+  };
+
+  const webhookUrl = `${window.location.origin}/api/whatsapp/evolution/webhook`;
+
+  return (
+    <div className="space-y-6">
+      {/* 3 Step Onboarding Flow */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-[#181818] border border-neutral-800 p-4 rounded flex items-start space-x-3">
+          <div className="w-7 h-7 rounded-full bg-[#c8a24d]/20 text-[#c8a24d] font-bold text-xs flex items-center justify-center shrink-0">
+            1
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-white">Criar Instância</h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">
+              Tenha uma Evolution API instalada (na Railway, Render, VPS ou servidor próprio).
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-[#181818] border border-neutral-800 p-4 rounded flex items-start space-x-3">
+          <div className="w-7 h-7 rounded-full bg-[#22c55e]/20 text-[#22c55e] font-bold text-xs flex items-center justify-center shrink-0">
+            2
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-white">Escanear QR Code</h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">
+              Clique em "Gerar QR Code", aponte a câmera do WhatsApp no celular e conecte.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-[#181818] border border-neutral-800 p-4 rounded flex items-start space-x-3">
+          <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 font-bold text-xs flex items-center justify-center shrink-0">
+            3
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-white">Sincronização 24/7</h4>
+            <p className="text-[11px] text-neutral-400 mt-0.5">
+              Mensagens enviadas e recebidas aparecem automaticamente no histórico do lead.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Connection Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Form: Credentials */}
+        <div className="lg:col-span-7 bg-[#181818] border border-neutral-800 p-5 space-y-4">
+          <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2 border-b border-neutral-800 pb-3">
+            <Sliders className="w-4 h-4 text-[#c8a24d]" />
+            <span>Dados da sua Evolution API</span>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-neutral-300 mb-1">
+              URL do Servidor Evolution API
+            </label>
+            <input
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="https://sua-api.up.railway.app ou https://evolution.seudominio.com"
+              className="w-full bg-neutral-900 border border-neutral-700 text-xs text-white p-3 focus:border-[#c8a24d] focus:outline-none"
+            />
+            <span className="text-[10px] text-neutral-500 mt-0.5 block">
+              A URL pública onde sua Evolution API está hospedada.
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-neutral-300 mb-1">
+                Nome da Instância
+              </label>
+              <input
+                type="text"
+                value={instanceName}
+                onChange={(e) => setInstanceName(e.target.value)}
+                placeholder="sergio_langer_vip"
+                className="w-full bg-neutral-900 border border-neutral-700 text-xs text-white p-3 focus:border-[#c8a24d] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-neutral-300 mb-1">
+                Chave Global (API Key / Token)
+              </label>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Ex: 42964e2b-6b81-435e-99e1..."
+                className="w-full bg-neutral-900 border border-neutral-700 text-xs text-white p-3 focus:border-[#c8a24d] focus:outline-none font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center space-x-3">
+            <button
+              onClick={handleSaveCredentials}
+              className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs px-4 py-2.5 rounded transition-colors cursor-pointer flex items-center space-x-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Salvar Dados</span>
+            </button>
+
+            <button
+              onClick={handleCheckOrConnect}
+              disabled={connectionState === 'checking'}
+              className="bg-[#22c55e] hover:bg-[#1ea34d] disabled:bg-neutral-800 disabled:text-neutral-500 text-black font-black text-xs px-5 py-2.5 rounded transition-colors cursor-pointer flex items-center space-x-2 shadow-md"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>{connectionState === 'checking' ? 'Verificando...' : 'Gerar QR Code / Conectar'}</span>
+            </button>
+          </div>
+
+          {statusMessage && (
+            <div className={`p-3 rounded text-xs leading-relaxed ${
+              connectionState === 'open' 
+                ? 'bg-[#22c55e]/10 border border-[#22c55e]/30 text-[#22c55e]'
+                : connectionState === 'error'
+                ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+                : 'bg-[#c8a24d]/10 border border-[#c8a24d]/30 text-[#c8a24d]'
+            }`}>
+              {statusMessage}
+            </div>
+          )}
+
+          {/* Webhook Config info */}
+          <div className="mt-4 pt-4 border-t border-neutral-800">
+            <div className="text-xs font-bold text-neutral-300 mb-1 flex items-center justify-between">
+              <span>URL de Webhook do CRM (Para receber respostas dos clientes):</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(webhookUrl);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                className="text-[10px] text-[#c8a24d] hover:text-white flex items-center space-x-1 cursor-pointer font-normal"
+              >
+                {isCopied ? <Check className="w-3 h-3 text-[#22c55e]" /> : <Copy className="w-3 h-3" />}
+                <span>{isCopied ? 'Copiado!' : 'Copiar Webhook'}</span>
+              </button>
+            </div>
+            <div className="bg-neutral-950 p-2 text-[11px] font-mono text-neutral-400 border border-neutral-800 select-all overflow-x-auto">
+              {webhookUrl}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Canvas: QR Code & Status Box */}
+        <div className="lg:col-span-5 bg-[#181818] border border-neutral-800 p-5 flex flex-col items-center justify-center text-center relative min-h-[320px]">
+          {connectionState === 'open' ? (
+            <div className="space-y-4 py-6">
+              <div className="w-16 h-16 rounded-full bg-[#22c55e]/20 border border-[#22c55e] flex items-center justify-center mx-auto text-[#22c55e]">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Instância 100% Conectada</h3>
+                <p className="text-xs text-[#22c55e] font-semibold mt-1">Status: OPEN (Online)</p>
+                <p className="text-xs text-neutral-400 max-w-xs mt-2 mx-auto">
+                  Seu número está pronto para disparos com IA e sincronização no CRM.
+                </p>
+              </div>
+              <button
+                onClick={handleCheckOrConnect}
+                className="text-xs font-bold text-neutral-400 hover:text-white flex items-center space-x-1.5 mx-auto bg-neutral-900 border border-neutral-800 px-3 py-1.5 rounded cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Verificar Novamente</span>
+              </button>
+            </div>
+          ) : qrCodeBase64 ? (
+            <div className="space-y-3 py-2">
+              <div className="p-3 bg-white rounded-lg shadow-xl inline-block border-4 border-[#22c55e]">
+                {qrCodeBase64.startsWith('data:image') ? (
+                  <img src={qrCodeBase64} alt="QR Code WhatsApp" className="w-48 h-48 mx-auto" />
+                ) : (
+                  <img src={`data:image/png;base64,${qrCodeBase64}`} alt="QR Code WhatsApp" className="w-48 h-48 mx-auto" />
+                )}
+              </div>
+              <div className="text-xs font-bold text-white">Aponte o WhatsApp do Celular</div>
+              <p className="text-[11px] text-neutral-400 max-w-xs mx-auto">
+                No celular: <strong>Configurações &gt; Aparelhos Conectados &gt; Conectar um aparelho</strong>
+              </p>
+              <button
+                onClick={handleCheckOrConnect}
+                className="text-xs font-bold text-[#c8a24d] hover:text-white flex items-center space-x-1 mx-auto pt-1 cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Atualizar QR Code</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-8">
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center mx-auto text-neutral-500">
+                <QrCode className="w-8 h-8" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Aguardando Conexão</h4>
+                <p className="text-xs text-neutral-400 max-w-xs mt-1 mx-auto leading-relaxed">
+                  Insira as credenciais da sua Evolution API ao lado e clique no botão para gerar o QR Code.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
