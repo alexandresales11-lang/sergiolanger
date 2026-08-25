@@ -40,41 +40,11 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
   const [inputMessage, setInputMessage] = useState('');
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [selectedPropertyCode, setSelectedPropertyCode] = useState<string>('');
-  const [simulateClientReply, setSimulateClientReply] = useState(true);
+  const [simulateClientReply, setSimulateClientReply] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fallback initial chat history if not present on client
-  const defaultHistory: WhatsAppChatMessage[] = [
-    {
-      id: `msg-init-1`,
-      sender: 'client',
-      senderName: client.name,
-      text: `Olá, Sergio. Vi a apresentação sobre os imóveis off-market de vocês. Gostaria de saber mais sobre as opções disponíveis para o meu perfil.`,
-      timestamp: '10:14',
-      status: 'read',
-    },
-    {
-      id: `msg-init-2`,
-      sender: 'broker',
-      senderName: 'Sergio Langer',
-      text: `Olá, ${client.name.split(' ')[0]}! É uma honra atendê-lo. Temos 2 oportunidades estritamente confidenciais nos bairros ${client.preferredNeighborhoods.slice(0, 2).join(' e ')} na faixa de ${formatCompactCurrency(client.targetBudgetMin)} a ${formatCompactCurrency(client.targetBudgetMax)}.`,
-      timestamp: '10:16',
-      status: 'read',
-    },
-    {
-      id: `msg-init-3`,
-      sender: 'client',
-      senderName: client.name,
-      text: `Excelente. Poderia me enviar os detalhes e a metragem aproximada? Minha prioridade é segurança armada e vista privativa.`,
-      timestamp: '10:18',
-      status: 'read',
-    },
-  ];
-
-  const chatMessages: WhatsAppChatMessage[] = client.chatHistory && client.chatHistory.length > 0
-    ? client.chatHistory
-    : defaultHistory;
+  const chatMessages: WhatsAppChatMessage[] = client.chatHistory || [];
 
   useEffect(() => {
     if (autoScroll && messagesEndRef.current) {
@@ -83,7 +53,7 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
   }, [chatMessages, autoScroll]);
 
   // Send message directly from CRM to WhatsApp
-  const handleSendBrokerMessage = async (customText?: string) => {
+  const handleSendBrokerMessage = async (customText?: string, openWhatsAppApp: boolean = true) => {
     const textToSend = customText || inputMessage;
     if (!textToSend.trim()) return;
 
@@ -101,13 +71,15 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
     onSendMessage(client.id, newMsg);
     if (!customText) setInputMessage('');
 
-    // Trigger WhatsApp Web / App sync for real transmission
-    const cleanPhone = client.phone.replace(/\D/g, '');
-    const encodedText = encodeURIComponent(textToSend);
-    // Open in small popup or tab if requested
-    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+    // Trigger WhatsApp Web / App sync for real transmission if requested
+    if (openWhatsAppApp) {
+      const cleanPhone = client.phone.replace(/\D/g, '');
+      const encodedText = encodeURIComponent(textToSend.trim());
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+      window.open(waUrl, '_blank');
+    }
 
-    // If client simulation is enabled, generate automated smart reply after 2.5s
+    // Only if client simulation mode is explicitly enabled by the user
     if (simulateClientReply) {
       setTimeout(async () => {
         try {
@@ -254,10 +226,10 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
           {/* Main WhatsApp Chat Canvas (8 cols on lg) */}
           <div className="lg:col-span-8 flex flex-col bg-[#0b141a] relative border-r border-[#2a3942]">
             {/* Encryption & Security Badge */}
-            <div className="p-3 flex justify-center border-b border-[#2a3942]/40 bg-[#111b21]/80">
-              <div className="bg-[#182229] border border-[#2a3942] text-[#ffd279] text-[10px] px-3 py-1 rounded text-center shadow-sm flex items-center space-x-2">
-                <Lock className="w-3 h-3 text-[#ffd279] shrink-0" />
-                <span>Histórico sincronizado em tempo real com o WhatsApp do cliente.</span>
+            <div className="p-2.5 flex justify-center border-b border-[#2a3942]/40 bg-[#111b21]/80">
+              <div className="bg-[#182229] border border-[#2a3942] text-neutral-300 text-[11px] px-3 py-1 rounded text-center shadow-sm flex items-center space-x-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#22c55e] shrink-0" />
+                <span>Central de Disparo WhatsApp • Mensagens enviadas são salvas no CRM</span>
               </div>
             </div>
 
@@ -270,6 +242,18 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
                 backgroundSize: '24px 24px',
               }}
             >
+              {chatMessages.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-neutral-400 my-auto">
+                  <div className="w-12 h-12 rounded-full bg-[#182229] border border-[#c8a24d]/30 flex items-center justify-center mb-3">
+                    <Sparkles className="w-6 h-6 text-[#c8a24d]" />
+                  </div>
+                  <h4 className="text-white font-bold text-sm">Histórico de WhatsApp do Lead</h4>
+                  <p className="text-xs text-neutral-400 max-w-sm mt-1">
+                    Digite uma mensagem abaixo para enviar diretamente ao WhatsApp de <strong className="text-white">{client.name}</strong> ({client.phone}).
+                  </p>
+                </div>
+              )}
+
               {chatMessages.map((msg) => {
                 const isBroker = msg.sender === 'broker' || msg.sender === 'ai_concierge';
                 const isAi = msg.sender === 'ai_concierge';
@@ -445,9 +429,12 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
             {/* Smart Simulator Toggle */}
             <div className="bg-[#182229] border border-[#2a3942] p-3.5 rounded-lg flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-white">Simular Resposta do Cliente</div>
-                <div className="text-[10px] text-neutral-400">
-                  A IA responde como o cliente após seu envio.
+                <div className="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <Bot className="w-3.5 h-3.5 text-[#c8a24d]" />
+                  <span>Modo Teste / Simulação IA</span>
+                </div>
+                <div className="text-[10px] text-neutral-400 mt-0.5">
+                  Se ativado, a IA simula uma resposta do cliente após seu envio (apenas para testes).
                 </div>
               </div>
               <input
