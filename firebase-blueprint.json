@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "email": { "type": "string", "description": "User email" },
+        "displayName": { "type": "string", "description": "Broker or User name" },
+        "role": { "type": "string", "description": "Broker / Admin role" },
+        "creci": { "type": "string", "description": "Professional license number" },
+        "phone": { "type": "string", "description": "Contact phone" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" }
+      }
+    },
+    "Property": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique property ID" },
+        "code": { "type": "string", "description": "Unique MLS/Off-market code (e.g. SL-101)" },
+        "title": { "type": "string", "description": "Property title" },
+        "type": { "type": "string", "description": "Property typology" },
+        "neighborhood": { "type": "string", "description": "Neighborhood" },
+        "city": { "type": "string", "description": "City" },
+        "state": { "type": "string", "description": "State" },
+        "price": { "type": "number", "description": "Asking price in BRL" },
+        "areaM2": { "type": "number", "description": "Usable area in m2" },
+        "suites": { "type": "number", "description": "Suites count" },
+        "parkingSpots": { "type": "number", "description": "Parking spots count" },
+        "condoFee": { "type": "number", "description": "Monthly condo fee in BRL" },
+        "iptu": { "type": "number", "description": "Annual/monthly IPTU in BRL" },
+        "imageUrl": { "type": "string", "description": "High-res photo URL" },
+        "description": { "type": "string", "description": "Detailed descriptive text" },
+        "highlights": { "type": "array", "description": "List of key differential highlights" },
+        "status": { "type": "string", "description": "Property commercial status" },
+        "owner": { "type": "object", "description": "Confidential owner information" },
+        "createdAt": { "type": "string", "description": "Date created" }
+      }
+    },
+    "ClientVIP": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique client ID" },
+        "name": { "type": "string", "description": "VIP client full name" },
+        "email": { "type": "string", "description": "Client email" },
+        "phone": { "type": "string", "description": "Client phone/WhatsApp" },
+        "profile": { "type": "string", "description": "Client profile archetype" },
+        "targetBudgetMin": { "type": "number", "description": "Minimum budget in BRL" },
+        "targetBudgetMax": { "type": "number", "description": "Maximum budget in BRL" },
+        "preferredNeighborhoods": { "type": "array", "description": "List of neighborhoods" },
+        "preferredTypes": { "type": "array", "description": "Preferred property types" },
+        "stage": { "type": "string", "description": "Pipeline stage ID" },
+        "assignedBroker": { "type": "string", "description": "Responsible broker name" },
+        "estimatedDealValue": { "type": "number", "description": "Estimated deal VGV" },
+        "expectedCommission": { "type": "number", "description": "Expected commission (6%)" },
+        "urgency": { "type": "string", "description": "Buying urgency tier" },
+        "liquidityStatus": { "type": "string", "description": "Liquidity availability" },
+        "notes": { "type": "string", "description": "Confidential negotiation notes" },
+        "tags": { "type": "array", "description": "Search and filter tags" },
+        "associatedPropertyId": { "type": "string", "description": "Linked property ID" },
+        "createdAt": { "type": "string", "description": "Date registered" },
+        "interactions": { "type": "array", "description": "Log of interactions and timeline events" }
+      }
+    },
+    "AiChatMessage": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique message ID" },
+        "role": { "type": "string", "description": "user or assistant or system" },
+        "content": { "type": "string", "description": "Message text" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" },
+        "suggestedActions": { "type": "array", "description": "Quick action suggestions" }
+      }
+    }
+  }
+}

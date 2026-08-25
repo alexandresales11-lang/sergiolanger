@@ -1,0 +1,7 @@
+{
+  "name": "Sergio Langer - Consultoria & CRM Imobiliário VIP",
+  "description": "Plataforma de estratégia no mercado imobiliário de alto padrão e CRM VIP com pipeline de vendas, gestão de portfólio off-market e Smart Match algorítmico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
