@@ -430,6 +430,13 @@ Analisando sua solicitação com base nas melhores práticas do mercado de alto 
     }
   });
 
+  // Dedicated static images handler - never fall back to index.html for image requests
+  const publicImagesPath = path.join(process.cwd(), 'public', 'images');
+  app.use('/images', express.static(publicImagesPath, {
+    maxAge: '1h',
+    fallthrough: false,
+  }));
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

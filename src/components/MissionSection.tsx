@@ -67,10 +67,17 @@ export const MissionSection: React.FC<MissionSectionProps> = ({ t, onOpenModal }
           <div className="lg:col-span-6">
             <div className="relative bg-neutral-900 overflow-hidden shadow-2xl border border-neutral-800">
               <img
-                src="/images/missao_alto_padrao_event_1787582084347.jpg"
+                src="/images/missao_alto_padrao_event_1787582084347.jpg?v=2"
                 alt="Missão Alto Padrão & Luxo"
                 className="w-full h-auto object-cover aspect-[16/10] hover:scale-[1.02] transition-transform duration-500"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.failed) {
+                    target.dataset.failed = 'true';
+                    target.src = 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
+                  }
+                }}
               />
             </div>
           </div>

@@ -19,10 +19,17 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
               {/* Main Image Container */}
               <div className="relative bg-neutral-200 overflow-hidden shadow-sm">
                 <img
-                  src="/images/sergio_langer_portrait_1787582073474.jpg"
+                  src="/images/sergio_langer_portrait_1787582073474.jpg?v=2"
                   alt="Sergio Langer"
                   className="w-full h-auto object-cover grayscale contrast-110 aspect-square sm:aspect-[4/4.5]"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.failed) {
+                      target.dataset.failed = 'true';
+                      target.src = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=1000&q=80';
+                    }
+                  }}
                 />
               </div>
             </div>
