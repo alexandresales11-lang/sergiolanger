@@ -198,6 +198,31 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
     }
   };
 
+  // Sync entire WhatsApp history fetched from Evolution API
+  const handleSyncLiveChatHistory = async (clientId: string, messages: WhatsAppChatMessage[]) => {
+    const client = clients.find((c) => c.id === clientId);
+    if (!client) return;
+
+    const updatedClient: ClientVIP = {
+      ...client,
+      chatHistory: messages,
+    };
+
+    setClients((prev) => prev.map((c) => (c.id === clientId ? updatedClient : c)));
+    if (liveChatClient && liveChatClient.id === clientId) {
+      setLiveChatClient(updatedClient);
+    }
+    if (selectedClient && selectedClient.id === clientId) {
+      setSelectedClient(updatedClient);
+    }
+
+    try {
+      await saveClientToFirestore(updatedClient);
+    } catch (e) {
+      console.warn('Fallback: Chat history persisted locally');
+    }
+  };
+
   // Update client stage
   const handleUpdateClientStage = async (clientId: string, newStage: PipelineStageId) => {
     const client = clients.find((c) => c.id === clientId);
@@ -509,6 +534,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
         properties={properties}
         onClose={() => setLiveChatClient(null)}
         onSendMessage={handleSendLiveChatMessage}
+        onSyncHistory={handleSyncLiveChatHistory}
       />
     </div>
   );

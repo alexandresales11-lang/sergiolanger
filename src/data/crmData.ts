@@ -182,6 +182,46 @@ export const INITIAL_PROPERTIES: Property[] = [
 
 export const INITIAL_CLIENTS: ClientVIP[] = [
   {
+    id: 'cli-0',
+    name: 'Alexandre Sales',
+    email: 'alexandre_sales_11@hotmail.com',
+    phone: '+55 74 98835-9752',
+    profile: 'Investidor Familiar',
+    targetBudgetMin: 20000000,
+    targetBudgetMax: 40000000,
+    preferredNeighborhoods: ['Itaim Bibi', 'Vila Nova Conceição', 'Jardins'],
+    preferredTypes: ['Penthouse / Cobertura', 'Mansão Urbana'],
+    stage: 'visita_tecnica',
+    associatedPropertyId: 'prop-1',
+    assignedBroker: 'Sergio Langer',
+    estimatedDealValue: 28500000,
+    expectedCommission: 1710000,
+    urgency: 'Alta',
+    liquidityStatus: '100% Líquido / À Vista',
+    notes: 'Conta de teste oficial pareada com a Evolution API. Mensagens enviadas no chat chegam instantaneamente no WhatsApp real.',
+    tags: ['WhatsApp Conectado', 'VIP', 'Itaim Bibi', 'Teste Real'],
+    createdAt: '2026-08-25',
+    chatHistory: [
+      {
+        id: 'msg-alex-1',
+        sender: 'broker',
+        senderName: 'Sergio Langer',
+        text: 'Olá Alexandre! Confirmação de conexão real do WhatsApp Sergio Langer AI VIP.',
+        timestamp: '02:55',
+        status: 'read',
+      },
+    ],
+    interactions: [
+      {
+        id: 'int-alex-1',
+        date: '2026-08-25 02:55',
+        type: 'whatsapp',
+        author: 'Sergio Langer',
+        content: 'Confirmação de envio e entrega via Evolution API real.',
+      },
+    ],
+  },
+  {
     id: 'cli-1',
     name: 'Henrique Villela',
     email: 'h.villela@vcapital.com.br',
