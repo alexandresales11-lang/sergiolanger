@@ -70,7 +70,7 @@ export const INITIAL_PROPERTIES: Property[] = [
       'Elevador privativo biométrico',
       'Gerador full para 100% da unidade',
     ],
-    imageUrl: '/src/assets/images/luxury_penthouse_terrace_1787618010460.jpg',
+    imageUrl: '/images/luxury_penthouse_terrace_1787618010460.jpg',
     owner: {
       name: 'Dr. Roberto Faro e Silva',
       phone: '+55 11 98765-4321',
@@ -103,7 +103,7 @@ export const INITIAL_PROPERTIES: Property[] = [
       'Spa com sauna úmida e piscina aquecida',
       'Garagem subterrânea para coleção de carros',
     ],
-    imageUrl: '/src/assets/images/luxury_mansion_jardins_1787618022912.jpg',
+    imageUrl: '/images/luxury_mansion_jardins_1787618022912.jpg',
     owner: {
       name: 'Família Mendonça Dias',
       phone: '+55 11 99123-8877',
@@ -136,7 +136,7 @@ export const INITIAL_PROPERTIES: Property[] = [
       'Cozinha gourmet com churrasqueira Viking',
       'Totalmente decorada e mobiliada por designers',
     ],
-    imageUrl: '/src/assets/images/luxury_country_estate_1787618039456.jpg',
+    imageUrl: '/images/luxury_country_estate_1787618039456.jpg',
     owner: {
       name: 'Eduardo Guimarães',
       phone: '+55 11 97654-3210',
@@ -169,7 +169,7 @@ export const INITIAL_PROPERTIES: Property[] = [
       'Concierge internacional 24h',
       'Heliponto homologado no topo',
     ],
-    imageUrl: '/src/assets/images/luxury_beach_branded_residence_1787618051023.jpg',
+    imageUrl: '/images/luxury_beach_branded_residence_1787618051023.jpg',
     owner: {
       name: 'Grupo Prime Invest',
       phone: '+55 47 99988-1122',

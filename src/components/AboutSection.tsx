@@ -19,7 +19,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
               {/* Main Image Container */}
               <div className="relative bg-neutral-200 overflow-hidden shadow-sm">
                 <img
-                  src="/src/assets/images/sergio_langer_portrait_1787582073474.jpg"
+                  src="/images/sergio_langer_portrait_1787582073474.jpg"
                   alt="Sergio Langer"
                   className="w-full h-auto object-cover grayscale contrast-110 aspect-square sm:aspect-[4/4.5]"
                   referrerPolicy="no-referrer"
