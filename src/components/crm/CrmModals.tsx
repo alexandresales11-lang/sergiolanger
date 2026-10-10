@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   MessageCircle,
@@ -559,34 +559,72 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
   onClose,
   onSaveProperty,
 }) => {
-  const [code, setCode] = useState(`SL-${Math.floor(100 + Math.random() * 900)}`);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [code, setCode] = useState('');
   const [title, setTitle] = useState('');
   const [type, setType] = useState<PropertyType>('Penthouse / Cobertura');
-  const [neighborhood, setNeighborhood] = useState('Jardins');
-  const [city, setCity] = useState('São Paulo');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [city, setCity] = useState('');
   const [state, setState] = useState('SP');
-  const [price, setPrice] = useState(25000000);
-  const [areaM2, setAreaM2] = useState(480);
-  const [suites, setSuites] = useState(4);
-  const [parkingSpots, setParkingSpots] = useState(5);
-  const [condoFee, setCondoFee] = useState(12000);
-  const [iptu, setIptu] = useState(65000);
-  const [imageUrl, setImageUrl] = useState('/images/luxury_penthouse_terrace_1787618010460.jpg');
+  const [price, setPrice] = useState<number | ''>('');
+  const [areaM2, setAreaM2] = useState<number | ''>('');
+  const [suites, setSuites] = useState<number | ''>('');
+  const [parkingSpots, setParkingSpots] = useState<number | ''>('');
+  const [condoFee, setCondoFee] = useState<number | ''>('');
+  const [iptu, setIptu] = useState<number | ''>('');
+  const [imageUrl, setImageUrl] = useState('');
   const [imageMethod, setImageMethod] = useState<'upload' | 'url' | 'samples'>('upload');
   const [uploadFileName, setUploadFileName] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [status, setStatus] = useState<PropertyStatus>('exclusividade');
   const [description, setDescription] = useState('');
-  const [highlightsInput, setHighlightsInput] = useState('Piscina privativa aquecida, Vista 360 panorâmica, Automação Lutron, Segurança patrimonial blindada');
+  const [highlightsInput, setHighlightsInput] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [ownerPhone, setOwnerPhone] = useState('+55 11 9');
+  const [ownerPhone, setOwnerPhone] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
-  const [confidentialNotes, setConfidentialNotes] = useState('Proprietário aceita ouvir proposta à vista. Não aceita permuta imobiliária fora de SP.');
+  const [confidentialNotes, setConfidentialNotes] = useState('');
+
+  const resetForm = () => {
+    setCode('');
+    setTitle('');
+    setType('Penthouse / Cobertura');
+    setNeighborhood('');
+    setCity('');
+    setState('SP');
+    setPrice('');
+    setAreaM2('');
+    setSuites('');
+    setParkingSpots('');
+    setCondoFee('');
+    setIptu('');
+    setImageUrl('');
+    setImageMethod('upload');
+    setUploadFileName('');
+    setIsCompressing(false);
+    setUploadError(null);
+    setStatus('exclusividade');
+    setDescription('');
+    setHighlightsInput('');
+    ownerName && setOwnerName('');
+    ownerPhone && setOwnerPhone('');
+    ownerEmail && setOwnerEmail('');
+    confidentialNotes && setConfidentialNotes('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploadError(null);
     setIsCompressing(true);
     setUploadFileName(file.name);
 
@@ -594,38 +632,53 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1280;
-        const MAX_HEIGHT = 850;
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1280;
+          const MAX_HEIGHT = 850;
+          let width = img.width;
+          let height = img.height;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = Math.round((height * MAX_WIDTH) / width);
-            width = MAX_WIDTH;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
           }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = Math.round((width * MAX_HEIGHT) / height);
-            height = MAX_HEIGHT;
-          }
-        }
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          setImageUrl(dataUrl);
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            setImageUrl(dataUrl);
+            setUploadError(null);
+          } else {
+            // Fallback direct base64
+            setImageUrl(event.target?.result as string);
+          }
+        } catch {
+          // Fallback direct base64 if canvas is restricted
+          setImageUrl(event.target?.result as string);
+        } finally {
+          setIsCompressing(false);
         }
-        setIsCompressing(false);
       };
       img.onerror = () => {
         setIsCompressing(false);
+        setUploadError('Não foi possível ler este arquivo de imagem. Tente outro formato.');
       };
       img.src = event.target?.result as string;
+    };
+    reader.onerror = () => {
+      setIsCompressing(false);
+      setUploadError('Erro ao carregar o arquivo do seu computador.');
     };
     reader.readAsDataURL(file);
   };
@@ -641,9 +694,12 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       .map((h) => h.trim())
       .filter(Boolean);
 
+    const finalCode = code.trim() || `SL-${Math.floor(100 + Math.random() * 900)}`;
+    const finalImageUrl = imageUrl.trim() || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+
     const newProperty: Property = {
       id: `prop-${Date.now()}`,
-      code: code.trim() || `SL-${Math.floor(100 + Math.random() * 900)}`,
+      code: finalCode,
       title: title.trim(),
       type,
       neighborhood: neighborhood.trim(),
@@ -655,21 +711,22 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       parkingSpots: Number(parkingSpots) || 0,
       condoFee: Number(condoFee) || 0,
       iptu: Number(iptu) || 0,
-      imageUrl: imageUrl.trim() || '/images/luxury_penthouse_terrace_1787618010460.jpg',
+      imageUrl: finalImageUrl,
       status,
-      description: description.trim() || `${type} exclusivo em ${neighborhood}, ${city}. Arquitetura autoral, acabamento ultra-premium e total discrição.`,
-      highlights: highlights.length > 0 ? highlights : ['Acabamento de altíssimo padrão', 'Segurança máxima', 'Localização prime'],
+      description: description.trim() || `${type} exclusivo em ${neighborhood || 'localização nobre'}, ${city || 'SP'}. Arquitetura autoral e total discrição.`,
+      highlights: highlights.length > 0 ? highlights : ['Acabamento de altíssimo padrão', 'Segurança patrimonial'],
       smartKeywords: [type.toLowerCase(), neighborhood.toLowerCase(), city.toLowerCase(), 'luxo', 'alto padrão', ...highlights.map((h) => h.toLowerCase())],
       owner: {
         name: ownerName.trim() || 'Proprietário Confidencial',
-        phone: ownerPhone.trim() || '+55 11 99999-0000',
-        email: ownerEmail.trim() || 'contato.offmarket@langer.com',
-        confidentialNotes: confidentialNotes.trim() || 'Acesso sob NDA prévio.',
+        phone: ownerPhone.trim() || '',
+        email: ownerEmail.trim() || '',
+        confidentialNotes: confidentialNotes.trim() || '',
       },
       createdAt: new Date().toISOString().slice(0, 10),
     };
 
     onSaveProperty(newProperty);
+    resetForm();
     onClose();
   };
 
@@ -677,7 +734,7 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-4xl bg-[#111111] text-white border border-neutral-800 p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 text-neutral-400 hover:text-white transition-colors p-2"
           aria-label="Fechar"
         >
@@ -808,9 +865,10 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
                 type="number"
                 required
                 min={0}
-                step={500000}
+                step={10000}
+                placeholder="Ex: 25000000"
                 value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
+                onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none font-bold"
               />
             </div>
@@ -823,22 +881,23 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
                 type="number"
                 required
                 min={0}
+                placeholder="Ex: 480"
                 value={areaM2}
-                onChange={(e) => setAreaM2(Number(e.target.value))}
+                onChange={(e) => setAreaM2(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
               />
             </div>
 
             <div>
               <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
-                Suítes *
+                Suítes
               </label>
               <input
                 type="number"
-                required
                 min={0}
+                placeholder="Ex: 4"
                 value={suites}
-                onChange={(e) => setSuites(Number(e.target.value))}
+                onChange={(e) => setSuites(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
               />
             </div>
@@ -850,8 +909,9 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
               <input
                 type="number"
                 min={0}
+                placeholder="Ex: 5"
                 value={parkingSpots}
-                onChange={(e) => setParkingSpots(Number(e.target.value))}
+                onChange={(e) => setParkingSpots(e.target.value === '' ? '' : Number(e.target.value))}
                 className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
               />
             </div>
@@ -863,16 +923,16 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
               <div className="flex space-x-1">
                 <input
                   type="number"
-                  placeholder="Cond."
+                  placeholder="Cond. (R$)"
                   value={condoFee}
-                  onChange={(e) => setCondoFee(Number(e.target.value))}
+                  onChange={(e) => setCondoFee(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-1/2 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2 py-2.5 focus:outline-none"
                 />
                 <input
                   type="number"
-                  placeholder="IPTU"
+                  placeholder="IPTU (R$)"
                   value={iptu}
-                  onChange={(e) => setIptu(Number(e.target.value))}
+                  onChange={(e) => setIptu(e.target.value === '' ? '' : Number(e.target.value))}
                   className="w-1/2 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2 py-2.5 focus:outline-none"
                 />
               </div>
@@ -937,28 +997,101 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
             {/* Painel 1: Upload Direto do Computador/Celular */}
             {imageMethod === 'upload' && (
               <div className="space-y-3">
-                <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-neutral-700 hover:border-[#c8a24d] bg-[#1a1a1a] hover:bg-[#1f1f1f] transition-all cursor-pointer group text-center">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="sr-only"
-                  />
-                  <div className="w-12 h-12 rounded-full bg-[#242424] group-hover:bg-[#c8a24d]/10 flex items-center justify-center mb-2 border border-neutral-700 group-hover:border-[#c8a24d]/50 transition-colors">
-                    <Upload className="w-6 h-6 text-[#c8a24d]" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="property-file-input"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      const fakeEvent = {
+                        target: { files: [file] },
+                      } as unknown as React.ChangeEvent<HTMLInputElement>;
+                      handleFileUpload(fakeEvent);
+                    }
+                  }}
+                  className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed transition-all cursor-pointer group text-center ${
+                    imageUrl && uploadFileName
+                      ? 'border-emerald-500/70 bg-emerald-950/20'
+                      : 'border-neutral-700 hover:border-[#c8a24d] bg-[#1a1a1a] hover:bg-[#202020]'
+                  }`}
+                >
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 border transition-colors ${
+                    imageUrl && uploadFileName
+                      ? 'bg-emerald-500/20 border-emerald-500/50'
+                      : 'bg-[#242424] group-hover:bg-[#c8a24d]/10 border-neutral-700 group-hover:border-[#c8a24d]/50'
+                  }`}>
+                    {imageUrl && uploadFileName ? (
+                      <Check className="w-7 h-7 text-emerald-400" />
+                    ) : (
+                      <Upload className="w-7 h-7 text-[#c8a24d]" />
+                    )}
                   </div>
-                  <span className="text-xs font-bold text-white group-hover:text-[#c8a24d] transition-colors">
-                    {uploadFileName ? `Foto: ${uploadFileName}` : 'Clique aqui para escolher a foto do seu computador ou celular'}
-                  </span>
-                  <span className="text-[11px] text-neutral-400 mt-1">
-                    Formatos aceitos: JPG, PNG, WEBP. Compressão e otimização automática para nuvem.
-                  </span>
+
+                  <p className="text-sm font-bold text-white group-hover:text-[#c8a24d] transition-colors mb-1">
+                    {uploadFileName
+                      ? `Foto Carregada: ${uploadFileName}`
+                      : 'Clique aqui ou arraste para escolher a foto do imóvel'}
+                  </p>
+
+                  <p className="text-[11px] text-neutral-400 max-w-md">
+                    Selecione qualquer arquivo do seu computador ou celular (PNG, JPG, JPEG, WEBP).
+                  </p>
+
+                  <div className="mt-3 flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-4 py-1.5 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-extrabold text-xs uppercase tracking-wider transition-colors cursor-pointer shadow"
+                    >
+                      {uploadFileName ? 'Trocar Foto' : 'Selecionar Arquivo'}
+                    </button>
+
+                    {imageUrl && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImageUrl('');
+                          setUploadFileName('');
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        Remover Foto
+                      </button>
+                    )}
+                  </div>
+
                   {isCompressing && (
-                    <span className="mt-2 text-xs text-[#c8a24d] font-semibold animate-pulse">
-                      Processando e otimizando resolução da foto...
-                    </span>
+                    <div className="mt-3 flex items-center space-x-2 text-xs text-[#c8a24d] font-semibold animate-pulse">
+                      <span>Otimizando e carregando resolução da fotografia...</span>
+                    </div>
                   )}
-                </label>
+
+                  {uploadError && (
+                    <div className="mt-3 flex items-center space-x-1.5 text-xs text-rose-400 font-semibold bg-rose-950/30 px-3 py-1.5 border border-rose-800/50">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{uploadError}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1178,7 +1311,7 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
           <div className="flex items-center justify-end space-x-3 pt-4 border-t border-neutral-800">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
             >
               Cancelar
