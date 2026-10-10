@@ -22,6 +22,10 @@ import {
   Trash2,
   Building2,
   Image as ImageIcon,
+  Upload,
+  Link as LinkIcon,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import {
   ClientVIP,
@@ -568,6 +572,9 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
   const [condoFee, setCondoFee] = useState(12000);
   const [iptu, setIptu] = useState(65000);
   const [imageUrl, setImageUrl] = useState('/images/luxury_penthouse_terrace_1787618010460.jpg');
+  const [imageMethod, setImageMethod] = useState<'upload' | 'url' | 'samples'>('upload');
+  const [uploadFileName, setUploadFileName] = useState('');
+  const [isCompressing, setIsCompressing] = useState(false);
   const [status, setStatus] = useState<PropertyStatus>('exclusividade');
   const [description, setDescription] = useState('');
   const [highlightsInput, setHighlightsInput] = useState('Piscina privativa aquecida, Vista 360 panorâmica, Automação Lutron, Segurança patrimonial blindada');
@@ -575,6 +582,53 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
   const [ownerPhone, setOwnerPhone] = useState('+55 11 9');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [confidentialNotes, setConfidentialNotes] = useState('Proprietário aceita ouvir proposta à vista. Não aceita permuta imobiliária fora de SP.');
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    setUploadFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1280;
+        const MAX_HEIGHT = 850;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setImageUrl(dataUrl);
+        }
+        setIsCompressing(false);
+      };
+      img.onerror = () => {
+        setIsCompressing(false);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (!isOpen) return null;
 
@@ -825,41 +879,208 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
             </div>
           </div>
 
-          {/* Seção 4: Foto e URL */}
-          <div>
-            <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
-              URL da Fotografia Principal
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Ex: /images/luxury_penthouse_terrace_1787618010460.jpg ou link https://..."
-                className="flex-1 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setImageUrl('/images/luxury_penthouse_terrace_1787618010460.jpg')}
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
-              >
-                Foto Penthouse
-              </button>
-              <button
-                type="button"
-                onClick={() => setImageUrl('/images/luxury_mansion_jardins_1787618022912.jpg')}
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
-              >
-                Foto Mansão
-              </button>
-              <button
-                type="button"
-                onClick={() => setImageUrl('/images/luxury_country_estate_1787618039456.jpg')}
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
-              >
-                Foto Campo
-              </button>
+          {/* Seção 4: Fotografia Principal com Upload e Pré-visualização */}
+          <div className="bg-[#151515] border border-neutral-800 p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
+              <div>
+                <label className="text-[11px] font-bold text-[#c8a24d] uppercase tracking-wider block">
+                  Fotografia Principal do Imóvel *
+                </label>
+                <p className="text-[11px] text-neutral-400">
+                  Escolha como deseja inserir a foto do ativo de luxo:
+                </p>
+              </div>
+
+              {/* Botões de Seleção de Método */}
+              <div className="flex items-center space-x-1.5 bg-[#1d1d1d] p-1 border border-neutral-700">
+                <button
+                  type="button"
+                  onClick={() => setImageMethod('upload')}
+                  className={`flex items-center space-x-1.5 text-xs px-3 py-1.5 font-bold transition-all cursor-pointer ${
+                    imageMethod === 'upload'
+                      ? 'bg-[#c8a24d] text-black shadow-sm'
+                      : 'text-neutral-300 hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload do Arquivo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImageMethod('url')}
+                  className={`flex items-center space-x-1.5 text-xs px-3 py-1.5 font-bold transition-all cursor-pointer ${
+                    imageMethod === 'url'
+                      ? 'bg-[#c8a24d] text-black shadow-sm'
+                      : 'text-neutral-300 hover:text-white'
+                  }`}
+                >
+                  <LinkIcon className="w-3.5 h-3.5" />
+                  <span>Link / URL</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImageMethod('samples')}
+                  className={`flex items-center space-x-1.5 text-xs px-3 py-1.5 font-bold transition-all cursor-pointer ${
+                    imageMethod === 'samples'
+                      ? 'bg-[#c8a24d] text-black shadow-sm'
+                      : 'text-neutral-300 hover:text-white'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Modelos de Luxo</span>
+                </button>
+              </div>
             </div>
+
+            {/* Painel 1: Upload Direto do Computador/Celular */}
+            {imageMethod === 'upload' && (
+              <div className="space-y-3">
+                <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-neutral-700 hover:border-[#c8a24d] bg-[#1a1a1a] hover:bg-[#1f1f1f] transition-all cursor-pointer group text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="sr-only"
+                  />
+                  <div className="w-12 h-12 rounded-full bg-[#242424] group-hover:bg-[#c8a24d]/10 flex items-center justify-center mb-2 border border-neutral-700 group-hover:border-[#c8a24d]/50 transition-colors">
+                    <Upload className="w-6 h-6 text-[#c8a24d]" />
+                  </div>
+                  <span className="text-xs font-bold text-white group-hover:text-[#c8a24d] transition-colors">
+                    {uploadFileName ? `Foto: ${uploadFileName}` : 'Clique aqui para escolher a foto do seu computador ou celular'}
+                  </span>
+                  <span className="text-[11px] text-neutral-400 mt-1">
+                    Formatos aceitos: JPG, PNG, WEBP. Compressão e otimização automática para nuvem.
+                  </span>
+                  {isCompressing && (
+                    <span className="mt-2 text-xs text-[#c8a24d] font-semibold animate-pulse">
+                      Processando e otimizando resolução da foto...
+                    </span>
+                  )}
+                </label>
+              </div>
+            )}
+
+            {/* Painel 2: Inserir Link ou URL da Web */}
+            {imageMethod === 'url' && (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Cole aqui o link da imagem (Ex: https://meusite.com.br/foto1.jpg ou link Unsplash / CDN)"
+                  className="w-full bg-[#1c1c1c] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+                />
+                <span className="text-[10px] text-neutral-400 block">
+                  Você pode usar qualquer link de imagem público da internet ou do site oficial da sua imobiliária.
+                </span>
+              </div>
+            )}
+
+            {/* Painel 3: Modelos de Demonstração */}
+            {imageMethod === 'samples' && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('/images/luxury_penthouse_terrace_1787618010460.jpg')}
+                  className={`p-2.5 border text-left flex items-center space-x-3 transition-colors cursor-pointer ${
+                    imageUrl === '/images/luxury_penthouse_terrace_1787618010460.jpg'
+                      ? 'border-[#c8a24d] bg-[#c8a24d]/10'
+                      : 'border-neutral-800 bg-[#1c1c1c] hover:border-neutral-700'
+                  }`}
+                >
+                  <img
+                    src="/images/luxury_penthouse_terrace_1787618010460.jpg"
+                    alt="Penthouse"
+                    className="w-12 h-10 object-cover border border-neutral-700 shrink-0"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white block">Penthouse Terraço</span>
+                    <span className="text-[10px] text-neutral-400">Jardins / SP</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('/images/luxury_mansion_jardins_1787618022912.jpg')}
+                  className={`p-2.5 border text-left flex items-center space-x-3 transition-colors cursor-pointer ${
+                    imageUrl === '/images/luxury_mansion_jardins_1787618022912.jpg'
+                      ? 'border-[#c8a24d] bg-[#c8a24d]/10'
+                      : 'border-neutral-800 bg-[#1c1c1c] hover:border-neutral-700'
+                  }`}
+                >
+                  <img
+                    src="/images/luxury_mansion_jardins_1787618022912.jpg"
+                    alt="Mansão Jardins"
+                    className="w-12 h-10 object-cover border border-neutral-700 shrink-0"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white block">Mansão Contemporânea</span>
+                    <span className="text-[10px] text-neutral-400">Jardins / SP</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('/images/luxury_country_estate_1787618039456.jpg')}
+                  className={`p-2.5 border text-left flex items-center space-x-3 transition-colors cursor-pointer ${
+                    imageUrl === '/images/luxury_country_estate_1787618039456.jpg'
+                      ? 'border-[#c8a24d] bg-[#c8a24d]/10'
+                      : 'border-neutral-800 bg-[#1c1c1c] hover:border-neutral-700'
+                  }`}
+                >
+                  <img
+                    src="/images/luxury_country_estate_1787618039456.jpg"
+                    alt="Fazenda"
+                    className="w-12 h-10 object-cover border border-neutral-700 shrink-0"
+                  />
+                  <div>
+                    <span className="text-xs font-bold text-white block">Fazenda & Haras</span>
+                    <span className="text-[10px] text-neutral-400">Fazenda Boa Vista</span>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Pré-visualização da Imagem Selecionada */}
+            {imageUrl && (
+              <div className="pt-2 border-t border-neutral-800/70">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px] font-bold text-neutral-300 uppercase tracking-wider">
+                      Pré-visualização da Fotografia no Portfólio VIP
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[#c8a24d] font-semibold">
+                    {imageUrl.startsWith('data:') ? 'Foto enviada do dispositivo' : 'URL ativa'}
+                  </span>
+                </div>
+
+                <div className="relative aspect-[16/7] w-full overflow-hidden border border-neutral-700 bg-neutral-900 group">
+                  <img
+                    src={imageUrl}
+                    alt="Preview do Ativo"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.failed) {
+                        target.dataset.failed = 'true';
+                        target.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+                      }
+                    }}
+                  />
+                  <div className="absolute top-3 left-3 bg-black/85 px-2.5 py-1 text-[10px] font-extrabold text-[#c8a24d] border border-[#c8a24d]/40 tracking-wider uppercase">
+                    Foto Principal
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-sm px-3 py-1 text-[11px] text-white border border-neutral-700 flex items-center space-x-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Pronta para Publicação</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Seção 5: Destaques & Descrição */}
