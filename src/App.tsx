@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Language } from './types';
+import { Language, CrmUser } from './types';
 import { translations } from './data/translations';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
@@ -15,9 +15,12 @@ import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { ModalForm } from './components/ModalForm';
 import { CrmApp } from './components/crm/CrmApp';
+import { CrmLoginScreen } from './components/crm/CrmLoginScreen';
+import { getStoredUser, logoutStaffUser } from './lib/authService';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState<'website' | 'crm'>('website');
+  const [currentUser, setCurrentUser] = useState<CrmUser | null>(() => getStoredUser());
+  const [viewMode, setViewMode] = useState<'website' | 'crm' | 'crm_login'>('website');
   const [lang, setLang] = useState<Language>('pt');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSubject, setModalSubject] = useState<string | undefined>(undefined);
@@ -34,8 +37,52 @@ export default function App() {
     setModalSubject(undefined);
   };
 
+  const handleOpenCrm = () => {
+    if (currentUser) {
+      setViewMode('crm');
+    } else {
+      setViewMode('crm_login');
+    }
+  };
+
+  const handleLogout = () => {
+    logoutStaffUser();
+    setCurrentUser(null);
+    setViewMode('website');
+  };
+
+  if (viewMode === 'crm_login') {
+    return (
+      <CrmLoginScreen
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          setViewMode('crm');
+        }}
+        onBackToSite={() => setViewMode('website')}
+      />
+    );
+  }
+
   if (viewMode === 'crm') {
-    return <CrmApp onBackToSite={() => setViewMode('website')} />;
+    if (!currentUser) {
+      return (
+        <CrmLoginScreen
+          onSuccess={(user) => {
+            setCurrentUser(user);
+            setViewMode('crm');
+          }}
+          onBackToSite={() => setViewMode('website')}
+        />
+      );
+    }
+
+    return (
+      <CrmApp
+        onBackToSite={() => setViewMode('website')}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (
@@ -46,7 +93,8 @@ export default function App() {
         setLang={setLang}
         t={t}
         onOpenModal={handleOpenModal}
-        onOpenCRM={() => setViewMode('crm')}
+        onOpenCRM={handleOpenCrm}
+        currentUser={currentUser}
       />
 
       {/* Main Sections matching screenshots in exact order */}

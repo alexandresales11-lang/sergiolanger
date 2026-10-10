@@ -6,6 +6,7 @@ import {
   ClientInteraction,
   SmartMatchItem,
   WhatsAppChatMessage,
+  CrmUser,
 } from '../../types';
 import {
   INITIAL_PROPERTIES,
@@ -15,10 +16,19 @@ import {
   seedDatabaseIfEmpty,
   saveClientToFirestore,
   savePropertyToFirestore,
+  deletePropertyFromFirestore,
   db,
   CLIENTS_COLLECTION,
   PROPERTIES_COLLECTION,
+  TEAM_MEMBERS_COLLECTION,
 } from '../../lib/firebase';
+import {
+  getTeamWhitelist,
+  registerOrUpdateMember,
+  setMemberStatus,
+  deleteTeamMember,
+  DEFAULT_TEAM_MEMBERS,
+} from '../../lib/authService';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { CrmHeader } from './CrmHeader';
 import { CrmDashboard } from './CrmDashboard';
@@ -28,9 +38,11 @@ import { CrmClientsList } from './CrmClientsList';
 import { CrmSmartMatchStudio } from './CrmSmartMatchStudio';
 import { CrmAiCopilot } from './CrmAiCopilot';
 import { CrmWhatsAppBotStudio } from './CrmWhatsAppBotStudio';
+import { CrmTeamManagement } from './CrmTeamManagement';
 import {
   ClientDetailModal,
   PropertyDetailModal,
+  NewPropertyModal,
   NewLeadModal,
   WhatsAppGeneratorModal,
 } from './CrmModals';
@@ -39,13 +51,26 @@ import { Sparkles, Bot, Move, Smartphone } from 'lucide-react';
 
 interface CrmAppProps {
   onBackToSite: () => void;
+  currentUser?: CrmUser | null;
+  onLogout?: () => void;
 }
 
-export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
-  // Tabs: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot'
+export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLogout }) => {
+  // Tabs: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team'
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot'
+    'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team'
   >('dashboard');
+
+  // Team Members State for Access Control & Whitelist
+  const [teamMembers, setTeamMembers] = useState<CrmUser[]>(() => {
+    const saved = localStorage.getItem('sergio_crm_local_team_whitelist');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return DEFAULT_TEAM_MEMBERS;
+  });
 
   // Properties State with Local Storage fallback
   const [properties, setProperties] = useState<Property[]>(() => {
@@ -120,6 +145,33 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
             console.warn('Firestore properties realtime sync fallback to local:', err);
           }
         );
+
+        // Listen for team members updates in real-time
+        const unsubTeam = onSnapshot(
+          collection(db, TEAM_MEMBERS_COLLECTION),
+          (snapshot) => {
+            if (!snapshot.empty) {
+              const loadedTeam: CrmUser[] = [];
+              snapshot.forEach((doc) => {
+                loadedTeam.push(doc.data() as CrmUser);
+              });
+              setTeamMembers(loadedTeam);
+              localStorage.setItem('sergio_crm_local_team_whitelist', JSON.stringify(loadedTeam));
+            } else {
+              // Inicializa whitelist padrão no banco
+              getTeamWhitelist().then(setTeamMembers);
+            }
+          },
+          (err) => {
+            console.warn('Firestore team realtime sync fallback:', err);
+          }
+        );
+
+        return () => {
+          unsubClients();
+          unsubProps();
+          unsubTeam();
+        };
       } catch (error) {
         console.warn('Firebase init fallback to local storage:', error);
       }
@@ -146,6 +198,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
   const [selectedClient, setSelectedClient] = useState<ClientVIP | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isNewLeadOpen, setIsNewLeadOpen] = useState(false);
+  const [isNewPropertyOpen, setIsNewPropertyOpen] = useState(false);
   const [newLeadPrefillStage, setNewLeadPrefillStage] = useState<PipelineStageId>('lead_recebido');
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
   const [whatsAppClientTarget, setWhatsAppClientTarget] = useState<ClientVIP | null>(null);
@@ -317,6 +370,49 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
     }
   };
 
+  // Save new property
+  const handleSaveProperty = async (newProperty: Property) => {
+    setProperties((prev) => [newProperty, ...prev]);
+
+    try {
+      await savePropertyToFirestore(newProperty);
+    } catch (e) {
+      console.warn('Fallback: Property saved locally only');
+    }
+  };
+
+  // Delete property
+  const handleDeleteProperty = async (propertyId: string) => {
+    setProperties((prev) => prev.filter((p) => p.id !== propertyId));
+    if (selectedProperty && selectedProperty.id === propertyId) {
+      setSelectedProperty(null);
+    }
+
+    try {
+      await deletePropertyFromFirestore(propertyId);
+    } catch (e) {
+      console.warn('Fallback: Property deleted locally only');
+    }
+  };
+
+  // Update property status
+  const handleUpdatePropertyStatus = async (propertyId: string, status: Property['status']) => {
+    const prop = properties.find((p) => p.id === propertyId);
+    if (!prop) return;
+
+    const updatedProp: Property = { ...prop, status };
+    setProperties((prev) => prev.map((p) => (p.id === propertyId ? updatedProp : p)));
+    if (selectedProperty && selectedProperty.id === propertyId) {
+      setSelectedProperty(updatedProp);
+    }
+
+    try {
+      await savePropertyToFirestore(updatedProp);
+    } catch (e) {
+      console.warn('Fallback: Property status updated locally only');
+    }
+  };
+
   // Direct WhatsApp Triggers
   const handleTriggerClientWhatsApp = (client: ClientVIP) => {
     setWhatsAppClientTarget(client);
@@ -335,6 +431,35 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
     setWhatsAppClientTarget(match.client);
     setWhatsAppPropertyTarget(match.property);
     setIsWhatsAppOpen(true);
+  };
+
+  // Team Management Handlers (Acessos, Contratação e Demissão)
+  const handleAddMember = async (newMember: CrmUser) => {
+    await registerOrUpdateMember(newMember);
+    setTeamMembers((prev) => {
+      const idx = prev.findIndex((m) => m.id === newMember.id || m.email.toLowerCase() === newMember.email.toLowerCase());
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = newMember;
+        return copy;
+      }
+      return [newMember, ...prev];
+    });
+  };
+
+  const handleUpdateMemberStatus = async (
+    memberId: string,
+    status: 'active' | 'suspended' | 'terminated'
+  ) => {
+    await setMemberStatus(memberId, status);
+    setTeamMembers((prev) =>
+      prev.map((m) => (m.id === memberId ? { ...m, status } : m))
+    );
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    await deleteTeamMember(memberId);
+    setTeamMembers((prev) => prev.filter((m) => m.id !== memberId));
   };
 
   // Export Data Backup Handler (JSON / CSV)
@@ -386,6 +511,8 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
         setSearchQuery={setSearchQuery}
         onExportData={handleExportData}
         isCloudSynced={isCloudSynced}
+        currentUser={currentUser}
+        onLogout={onLogout}
       />
 
       {/* Main CRM Content View */}
@@ -422,7 +549,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
             properties={properties}
             onOpenPropertyDetail={setSelectedProperty}
             onOpenNewProperty={() => {
-              setIsNewLeadOpen(true);
+              setIsNewPropertyOpen(true);
             }}
             onTriggerSmartMatchForProperty={(property) => {
               setSelectedProperty(property);
@@ -444,6 +571,17 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
             onDirectWhatsApp={handleTriggerClientWhatsApp}
             onOpenLiveWhatsAppChat={setLiveChatClient}
             onUpdateClientStage={handleUpdateClientStage}
+          />
+        )}
+
+        {currentTab === 'team' && (
+          <CrmTeamManagement
+            currentUser={currentUser || null}
+            teamMembers={teamMembers}
+            onAddMember={handleAddMember}
+            onUpdateStatus={handleUpdateMemberStatus}
+            onDeleteMember={handleDeleteMember}
+            isCloudSynced={isCloudSynced}
           />
         )}
 
@@ -513,6 +651,14 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite }) => {
           setCurrentTab('smart_match');
         }}
         onShareWhatsApp={handleTriggerPropertyWhatsApp}
+        onDeleteProperty={handleDeleteProperty}
+        onUpdateStatus={handleUpdatePropertyStatus}
+      />
+
+      <NewPropertyModal
+        isOpen={isNewPropertyOpen}
+        onClose={() => setIsNewPropertyOpen(false)}
+        onSaveProperty={handleSaveProperty}
       />
 
       <NewLeadModal

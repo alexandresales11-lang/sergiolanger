@@ -12,7 +12,7 @@ import {
   orderBy,
   writeBatch
 } from 'firebase/firestore';
-import { ClientVIP, Property } from '../types';
+import { ClientVIP, Property, CrmUser } from '../types';
 import { INITIAL_PROPERTIES, INITIAL_CLIENTS } from '../data/crmData';
 
 // Configuração do Firebase carregada de forma segura
@@ -33,6 +33,7 @@ export const db = getFirestore(app, "ai-studio-sergiolanger-b2b93f75-7b21-4296-9
 export const CLIENTS_COLLECTION = 'vip_clients';
 export const PROPERTIES_COLLECTION = 'luxury_properties';
 export const AI_MESSAGES_COLLECTION = 'ai_chat_history';
+export const TEAM_MEMBERS_COLLECTION = 'team_members';
 
 /**
  * Inicializa os dados no Firestore se as coleções estiverem vazias
@@ -129,5 +130,50 @@ export async function deletePropertyFromFirestore(propertyId: string): Promise<v
   } catch (err) {
     console.error('Erro ao excluir imóvel no Firestore:', err);
     throw err;
+  }
+}
+
+/**
+ * Salva ou atualiza um colaborador no Firestore
+ */
+export async function saveTeamMemberToFirestore(member: CrmUser): Promise<void> {
+  try {
+    const memberRef = doc(db, TEAM_MEMBERS_COLLECTION, member.id);
+    await setDoc(memberRef, member, { merge: true });
+  } catch (err) {
+    console.error('Erro ao salvar colaborador no Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Remove um colaborador do Firestore
+ */
+export async function deleteTeamMemberFromFirestore(memberId: string): Promise<void> {
+  try {
+    const memberRef = doc(db, TEAM_MEMBERS_COLLECTION, memberId);
+    await deleteDoc(memberRef);
+  } catch (err) {
+    console.error('Erro ao excluir colaborador no Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Busca todos os colaboradores cadastrados no Firestore
+ */
+export async function getTeamMembersFromFirestore(): Promise<CrmUser[]> {
+  try {
+    const membersRef = collection(db, TEAM_MEMBERS_COLLECTION);
+    const snap = await getDocs(membersRef);
+    if (snap.empty) return [];
+    const members: CrmUser[] = [];
+    snap.forEach((docSnap) => {
+      members.push(docSnap.data() as CrmUser);
+    });
+    return members;
+  } catch (err) {
+    console.warn('Fallback ao ler colaboradores do Firestore:', err);
+    return [];
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Lock, LayoutDashboard } from 'lucide-react';
-import { Language, TranslationContent } from '../types';
+import { Language, TranslationContent, CrmUser } from '../types';
 
 interface HeaderProps {
   lang: Language;
@@ -8,9 +8,10 @@ interface HeaderProps {
   t: TranslationContent;
   onOpenModal: (subject?: string) => void;
   onOpenCRM: () => void;
+  currentUser?: CrmUser | null;
 }
 
-export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM }) => {
+export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM, currentUser }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -112,10 +113,20 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM }) =
           {/* CRM Portal Entrance Button */}
           <button
             onClick={onOpenCRM}
-            className="flex items-center space-x-2 bg-[#1b1b1b] hover:bg-[#252525] text-[#c8a24d] hover:text-[#e4be68] border border-[#c8a24d]/40 font-bold text-xs tracking-wider uppercase px-3.5 py-2 transition-all cursor-pointer shadow-sm"
+            className="flex items-center space-x-2 bg-[#1b1b1b] hover:bg-[#252525] text-[#c8a24d] hover:text-[#e4be68] border border-[#c8a24d]/40 font-bold text-xs tracking-wider uppercase px-3.5 py-2 transition-all cursor-pointer shadow-sm group"
+            title={currentUser ? `Conectado como ${currentUser.name}` : 'Acesso restrito à equipe'}
           >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>Área VIP / CRM</span>
+            {currentUser ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                <span>CRM ({currentUser.name.split(' ')[0]})</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-3.5 h-3.5 text-[#c8a24d] group-hover:scale-110 transition-transform" />
+                <span>Área VIP / CRM</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -124,10 +135,19 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM }) =
           {/* Quick CRM Button Mobile */}
           <button
             onClick={onOpenCRM}
-            className="flex items-center space-x-1 bg-[#1b1b1b] text-[#c8a24d] border border-[#c8a24d]/40 text-[10px] font-bold px-2.5 py-1.5 rounded uppercase"
+            className="flex items-center space-x-1.5 bg-[#1b1b1b] text-[#c8a24d] border border-[#c8a24d]/40 text-[10px] font-bold px-2.5 py-1.5 rounded uppercase"
           >
-            <LayoutDashboard className="w-3 h-3" />
-            <span>CRM</span>
+            {currentUser ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
+                <span>CRM</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-3 h-3 text-[#c8a24d]" />
+                <span>CRM</span>
+              </>
+            )}
           </button>
 
           {/* Mobile Language Switcher */}
@@ -177,10 +197,19 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM }) =
               setMobileMenuOpen(false);
               onOpenCRM();
             }}
-            className="w-full flex items-center justify-center space-x-2 bg-[#c8a24d] text-black font-bold text-xs uppercase tracking-wider py-3 mb-4"
+            className="w-full flex items-center justify-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-extrabold text-xs uppercase tracking-wider py-3 mb-4 transition-colors"
           >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Acessar CRM Imobiliário VIP</span>
+            {currentUser ? (
+              <>
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Entrar no CRM ({currentUser.name})</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4" />
+                <span>Acessar CRM Imobiliário VIP (Equipe)</span>
+              </>
+            )}
           </button>
 
           {navItems.map((item, idx) => (

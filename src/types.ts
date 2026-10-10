@@ -156,6 +156,7 @@ export interface Property {
     confidentialNotes: string;
   };
   smartKeywords: string[];
+  createdAt?: string;
 }
 
 export interface WhatsAppChatMessage {
@@ -206,5 +207,23 @@ export interface SmartMatchItem {
   client: ClientVIP;
   matchScore: number;
   reasons: string[];
+}
+
+export type UserRole = 'admin' | 'broker' | 'associate';
+
+export interface CrmUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  roleTitle: string;
+  avatar?: string;
+  creci?: string;
+  phone?: string;
+  status: 'active' | 'suspended' | 'terminated';
+  passwordHash?: string;
+  addedAt?: string;
+  addedBy?: string;
+  lastLoginAt?: string;
 }
 

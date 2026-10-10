@@ -14,13 +14,15 @@ import {
   Download,
   Check,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  LogOut,
 } from 'lucide-react';
 import { formatCompactCurrency } from '../../data/crmData';
+import { CrmUser } from '../../types';
 
 interface CrmHeaderProps {
-  currentTab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot';
-  setCurrentTab: (tab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot') => void;
+  currentTab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team';
+  setCurrentTab: (tab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team') => void;
   onBackToSite: () => void;
   totalVGV: number;
   totalClients: number;
@@ -31,6 +33,8 @@ interface CrmHeaderProps {
   setSearchQuery: (query: string) => void;
   onExportData?: () => void;
   isCloudSynced?: boolean;
+  currentUser?: CrmUser | null;
+  onLogout?: () => void;
 }
 
 export const CrmHeader: React.FC<CrmHeaderProps> = ({
@@ -44,6 +48,8 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
   setSearchQuery,
   onExportData,
   isCloudSynced = true,
+  currentUser,
+  onLogout,
 }) => {
   const [showExportToast, setShowExportToast] = useState(false);
 
@@ -52,6 +58,7 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
     { id: 'pipeline', label: 'Pipeline VIP (Kanban)', icon: Layers },
     { id: 'properties', label: 'Portfólio Exclusivo', icon: Building2 },
     { id: 'clients', label: 'Clientes VIP', icon: Users },
+    { id: 'team', label: 'Equipe & Acessos', icon: ShieldCheck, badge: 'GESTÃO' },
     { id: 'smart_match', label: 'Smart Match Studio', icon: Sparkles, badge: 'ALGORÍTMICO' },
     { id: 'whatsapp_bot', label: 'Agente WhatsApp Bot', icon: Smartphone, badge: 'WHATSAPP IA', highlight: true },
     { id: 'ai_copilot', label: 'Copiloto de Vendas', icon: Bot, badge: 'GEMINI 3.7' },
@@ -165,15 +172,32 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
             <span className="sm:hidden">Lead</span>
           </button>
 
-          {/* User Avatar */}
+          {/* User Profile & Logout */}
           <div className="flex items-center space-x-2 pl-2 border-l border-neutral-800">
             <div className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-[#c8a24d]/40 flex items-center justify-center text-xs font-bold text-[#c8a24d]">
-              SL
+              {currentUser?.name
+                ? currentUser.name.split(' ').map((n) => n[0]).join('').slice(0, 2)
+                : 'SL'}
             </div>
             <div className="hidden lg:flex flex-col text-left leading-none">
-              <span className="text-xs font-bold text-white">Sergio Langer</span>
-              <span className="text-[10px] text-neutral-400">Diretor Estratégico</span>
+              <span className="text-xs font-bold text-white">
+                {currentUser?.name || 'Sergio Langer'}
+              </span>
+              <span className="text-[10px] text-neutral-400">
+                {currentUser?.roleTitle || 'Diretor Estratégico'}
+              </span>
             </div>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex items-center space-x-1.5 text-xs text-neutral-400 hover:text-red-400 transition-colors px-2 py-1.5 rounded hover:bg-neutral-900 border border-transparent hover:border-neutral-800 cursor-pointer ml-1"
+                title="Encerrar sessão no CRM e voltar ao site público"
+              >
+                <LogOut className="w-3.5 h-3.5 text-neutral-500 hover:text-red-400" />
+                <span className="hidden xl:inline text-[11px] font-semibold">Sair</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

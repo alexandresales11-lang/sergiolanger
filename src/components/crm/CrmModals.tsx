@@ -19,6 +19,9 @@ import {
   Clock,
   DollarSign,
   Tag,
+  Trash2,
+  Building2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   ClientVIP,
@@ -329,6 +332,8 @@ interface PropertyDetailModalProps {
   onClose: () => void;
   onTriggerSmartMatch: (property: Property) => void;
   onShareWhatsApp: (property: Property) => void;
+  onDeleteProperty?: (propertyId: string) => void;
+  onUpdateStatus?: (propertyId: string, status: PropertyStatus) => void;
 }
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
@@ -336,7 +341,11 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onClose,
   onTriggerSmartMatch,
   onShareWhatsApp,
+  onDeleteProperty,
+  onUpdateStatus,
 }) => {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   if (!property) return null;
 
   return (
@@ -356,6 +365,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             src={property.imageUrl}
             alt={property.title}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.failed) {
+                target.dataset.failed = 'true';
+                target.src = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
+              }
+            }}
           />
           <div className="absolute top-4 left-4 bg-black/90 px-3 py-1 text-xs font-extrabold text-[#c8a24d] border border-[#c8a24d]/30">
             {property.code}
@@ -368,15 +384,29 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         {/* Header Details */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-neutral-800">
           <div>
-            <span className="text-xs font-bold tracking-[0.2em] text-[#c8a24d] uppercase block mb-1">
-              {property.type} • {property.neighborhood}, {property.city}
-            </span>
+            <div className="flex items-center space-x-3 mb-1">
+              <span className="text-xs font-bold tracking-[0.2em] text-[#c8a24d] uppercase block">
+                {property.type} • {property.neighborhood}, {property.city}
+              </span>
+              {onUpdateStatus && (
+                <select
+                  value={property.status}
+                  onChange={(e) => onUpdateStatus(property.id, e.target.value as PropertyStatus)}
+                  className="bg-[#1c1c1c] text-white text-xs border border-neutral-700 px-2 py-1 font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="disponivel">Disponível</option>
+                  <option value="exclusividade">Exclusividade Ativa</option>
+                  <option value="em_negociacao">Em Negociação</option>
+                  <option value="vendido">Vendido</option>
+                </select>
+              )}
+            </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-white">
               {property.title}
             </h2>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => onTriggerSmartMatch(property)}
               className="flex items-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-bold text-xs py-2.5 px-4 uppercase tracking-wider transition-colors cursor-pointer"
@@ -392,6 +422,40 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <MessageCircle className="w-4 h-4" />
               <span>Ficha WhatsApp</span>
             </button>
+
+            {onDeleteProperty && (
+              <div>
+                {!confirmDelete ? (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex items-center space-x-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-800/60 text-xs py-2.5 px-3 font-bold uppercase transition-colors cursor-pointer"
+                    title="Remover imóvel do portfólio"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remover</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-2 bg-red-950 border border-red-700 p-1">
+                    <span className="text-[11px] text-red-200 px-1 font-semibold">Confirmar?</span>
+                    <button
+                      onClick={() => {
+                        onDeleteProperty(property.id);
+                        onClose();
+                      }}
+                      className="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 font-extrabold cursor-pointer"
+                    >
+                      Sim, Excluir
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-2 py-1 cursor-pointer"
+                    >
+                      Não
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -471,6 +535,443 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 2.5 NEW PROPERTY MODAL (CADASTRO DE IMÓVEIS)
+// ==========================================
+
+interface NewPropertyModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSaveProperty: (property: Property) => void;
+}
+
+export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
+  isOpen,
+  onClose,
+  onSaveProperty,
+}) => {
+  const [code, setCode] = useState(`SL-${Math.floor(100 + Math.random() * 900)}`);
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState<PropertyType>('Penthouse / Cobertura');
+  const [neighborhood, setNeighborhood] = useState('Jardins');
+  const [city, setCity] = useState('São Paulo');
+  const [state, setState] = useState('SP');
+  const [price, setPrice] = useState(25000000);
+  const [areaM2, setAreaM2] = useState(480);
+  const [suites, setSuites] = useState(4);
+  const [parkingSpots, setParkingSpots] = useState(5);
+  const [condoFee, setCondoFee] = useState(12000);
+  const [iptu, setIptu] = useState(65000);
+  const [imageUrl, setImageUrl] = useState('/images/luxury_penthouse_terrace_1787618010460.jpg');
+  const [status, setStatus] = useState<PropertyStatus>('exclusividade');
+  const [description, setDescription] = useState('');
+  const [highlightsInput, setHighlightsInput] = useState('Piscina privativa aquecida, Vista 360 panorâmica, Automação Lutron, Segurança patrimonial blindada');
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('+55 11 9');
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [confidentialNotes, setConfidentialNotes] = useState('Proprietário aceita ouvir proposta à vista. Não aceita permuta imobiliária fora de SP.');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+
+    const highlights = highlightsInput
+      .split(',')
+      .map((h) => h.trim())
+      .filter(Boolean);
+
+    const newProperty: Property = {
+      id: `prop-${Date.now()}`,
+      code: code.trim() || `SL-${Math.floor(100 + Math.random() * 900)}`,
+      title: title.trim(),
+      type,
+      neighborhood: neighborhood.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      price: Number(price) || 0,
+      areaM2: Number(areaM2) || 0,
+      suites: Number(suites) || 0,
+      parkingSpots: Number(parkingSpots) || 0,
+      condoFee: Number(condoFee) || 0,
+      iptu: Number(iptu) || 0,
+      imageUrl: imageUrl.trim() || '/images/luxury_penthouse_terrace_1787618010460.jpg',
+      status,
+      description: description.trim() || `${type} exclusivo em ${neighborhood}, ${city}. Arquitetura autoral, acabamento ultra-premium e total discrição.`,
+      highlights: highlights.length > 0 ? highlights : ['Acabamento de altíssimo padrão', 'Segurança máxima', 'Localização prime'],
+      smartKeywords: [type.toLowerCase(), neighborhood.toLowerCase(), city.toLowerCase(), 'luxo', 'alto padrão', ...highlights.map((h) => h.toLowerCase())],
+      owner: {
+        name: ownerName.trim() || 'Proprietário Confidencial',
+        phone: ownerPhone.trim() || '+55 11 99999-0000',
+        email: ownerEmail.trim() || 'contato.offmarket@langer.com',
+        confidentialNotes: confidentialNotes.trim() || 'Acesso sob NDA prévio.',
+      },
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+
+    onSaveProperty(newProperty);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-4xl bg-[#111111] text-white border border-neutral-800 p-6 sm:p-8 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 text-neutral-400 hover:text-white transition-colors p-2"
+          aria-label="Fechar"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center space-x-3 mb-2">
+          <Building2 className="w-5 h-5 text-[#c8a24d]" />
+          <span className="text-[11px] font-bold tracking-[0.2em] text-[#c8a24d] uppercase">
+            Novo Ativo Imobiliário
+          </span>
+        </div>
+        <h2 className="text-2xl font-extrabold text-white mb-6">
+          Cadastrar Imóvel no Portfólio VIP
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Seção 1: Identificação Básica */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Código / Ref *
+              </label>
+              <input
+                type="text"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Ex: SL-105"
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Título do Imóvel *
+              </label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Penthouse Duplex com Vista 360°"
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Seção 2: Tipologia, Status e Localização */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Tipologia *
+              </label>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as PropertyType)}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none cursor-pointer"
+              >
+                <option value="Penthouse / Cobertura">Penthouse / Cobertura</option>
+                <option value="Mansão Urbana">Mansão Urbana</option>
+                <option value="Fazenda / Campo">Fazenda / Campo</option>
+                <option value="Branded Residence">Branded Residence</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Status Inicial *
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as PropertyStatus)}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none cursor-pointer"
+              >
+                <option value="exclusividade">Exclusividade Ativa</option>
+                <option value="disponivel">Disponível</option>
+                <option value="em_negociacao">Em Negociação</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Bairro *
+              </label>
+              <input
+                type="text"
+                required
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+                placeholder="Ex: Jardins"
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Cidade / UF *
+              </label>
+              <div className="flex space-x-1">
+                <input
+                  type="text"
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="São Paulo"
+                  className="w-3/4 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2.5 py-2.5 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  required
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  placeholder="SP"
+                  className="w-1/4 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2 py-2.5 text-center focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Seção 3: Valores & Metragem */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-[11px] font-bold text-[#c8a24d] uppercase tracking-wider block mb-1.5">
+                Preço Pedido (R$) *
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                step={500000}
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Área Útil (m²) *
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                value={areaM2}
+                onChange={(e) => setAreaM2(Number(e.target.value))}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Suítes *
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                value={suites}
+                onChange={(e) => setSuites(Number(e.target.value))}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Vagas
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={parkingSpots}
+                onChange={(e) => setParkingSpots(Number(e.target.value))}
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Condomínio / IPTU
+              </label>
+              <div className="flex space-x-1">
+                <input
+                  type="number"
+                  placeholder="Cond."
+                  value={condoFee}
+                  onChange={(e) => setCondoFee(Number(e.target.value))}
+                  className="w-1/2 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2 py-2.5 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  placeholder="IPTU"
+                  value={iptu}
+                  onChange={(e) => setIptu(Number(e.target.value))}
+                  className="w-1/2 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-2 py-2.5 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Seção 4: Foto e URL */}
+          <div>
+            <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+              URL da Fotografia Principal
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Ex: /images/luxury_penthouse_terrace_1787618010460.jpg ou link https://..."
+                className="flex-1 bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setImageUrl('/images/luxury_penthouse_terrace_1787618010460.jpg')}
+                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
+              >
+                Foto Penthouse
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageUrl('/images/luxury_mansion_jardins_1787618022912.jpg')}
+                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
+              >
+                Foto Mansão
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageUrl('/images/luxury_country_estate_1787618039456.jpg')}
+                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs px-3 py-2.5 font-semibold cursor-pointer"
+              >
+                Foto Campo
+              </button>
+            </div>
+          </div>
+
+          {/* Seção 5: Destaques & Descrição */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Diferenciais & Destaques (separados por vírgula)
+              </label>
+              <textarea
+                rows={3}
+                value={highlightsInput}
+                onChange={(e) => setHighlightsInput(e.target.value)}
+                placeholder="Ex: Piscina privativa, Vista 360, Heliponto, Automação completa"
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
+                Memorial Descritivo do Imóvel
+              </label>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descreva a arquitetura, acabamento, vista e atributos exclusivos..."
+                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Seção 6: Informações Confidenciais do Proprietário (Off-Market) */}
+          <div className="bg-[#171717] border border-neutral-800 p-4 space-y-3">
+            <div className="flex items-center space-x-2 text-[#c8a24d] text-xs font-bold uppercase tracking-wider">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Dados Confidenciais do Proprietário (Off-Market)</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-[10px] text-neutral-400 uppercase block mb-1">
+                  Nome do Proprietário / Família
+                </label>
+                <input
+                  type="text"
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  placeholder="Ex: Família Fontes"
+                  className="w-full bg-[#202020] border border-neutral-700 text-white text-xs px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-neutral-400 uppercase block mb-1">
+                  Telefone / WhatsApp Direto
+                </label>
+                <input
+                  type="text"
+                  value={ownerPhone}
+                  onChange={(e) => setOwnerPhone(e.target.value)}
+                  placeholder="+55 11 98888-7777"
+                  className="w-full bg-[#202020] border border-neutral-700 text-white text-xs px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-neutral-400 uppercase block mb-1">
+                  E-mail Confidencial
+                </label>
+                <input
+                  type="email"
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  placeholder="contato@familia.com.br"
+                  className="w-full bg-[#202020] border border-neutral-700 text-white text-xs px-3 py-2 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-neutral-400 uppercase block mb-1">
+                Diretrizes de Negociação / Termos NDA
+              </label>
+              <input
+                type="text"
+                value={confidentialNotes}
+                onChange={(e) => setConfidentialNotes(e.target.value)}
+                placeholder="Ex: Não divulgar fotos externas. Visitas apenas mediante qualificação financeira prévia."
+                className="w-full bg-[#202020] border border-neutral-700 text-white text-xs px-3 py-2 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Botões do Rodapé */}
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-neutral-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              className="flex items-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-extrabold text-xs px-6 py-2.5 uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Cadastrar Imóvel no Portfólio</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
