@@ -14,6 +14,7 @@ import { BottomCtaSection } from './components/BottomCtaSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { ModalForm } from './components/ModalForm';
+import { PublicPortfolioSection } from './components/PublicPortfolioSection';
 import { CrmApp } from './components/crm/CrmApp';
 import { CrmLoginScreen } from './components/crm/CrmLoginScreen';
 import { getStoredUser, logoutStaffUser } from './lib/authService';
@@ -102,7 +103,10 @@ export default function App() {
         {/* 1. Hero Section */}
         <HeroSection t={t} onOpenModal={handleOpenModal} />
 
-        {/* 2. Sobre Section (White) */}
+        {/* 2. Portfólio de Imóveis Exclusivos (Sincronizado com CRM em Tempo Real) */}
+        <PublicPortfolioSection onOpenModal={handleOpenModal} />
+
+        {/* 3. Sobre Section (White) */}
         <AboutSection t={t} />
 
         {/* 3. Consultoria Section (Black) */}

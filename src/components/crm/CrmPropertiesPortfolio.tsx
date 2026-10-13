@@ -14,8 +14,8 @@ import {
   DollarSign,
   Tag,
 } from 'lucide-react';
-import { Property, PropertyStatus, PropertyType } from '../../types';
-import { formatCurrency, formatCompactCurrency } from '../../data/crmData';
+import { Property, PropertyStatus, PropertyType, PropertyPurpose } from '../../types';
+import { formatCurrency, formatCompactCurrency, formatRentalCurrency } from '../../data/crmData';
 
 interface CrmPropertiesPortfolioProps {
   properties: Property[];
@@ -32,11 +32,14 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
   onTriggerSmartMatchForProperty,
   onSharePropertyWhatsApp,
 }) => {
+  const [purposeFilter, setPurposeFilter] = useState<string>('todos');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [typeFilter, setTypeFilter] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredProperties = properties.filter((p) => {
+    if (purposeFilter === 'venda' && p.purpose === 'aluguel') return false;
+    if (purposeFilter === 'aluguel' && p.purpose === 'venda') return false;
     if (statusFilter !== 'todos' && p.status !== statusFilter) return false;
     if (typeFilter !== 'todos' && p.type !== typeFilter) return false;
     if (searchQuery.trim() !== '') {
@@ -109,6 +112,16 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
           />
 
           <select
+            value={purposeFilter}
+            onChange={(e) => setPurposeFilter(e.target.value)}
+            className="bg-[#171717] border border-[#c8a24d]/40 text-[#c8a24d] text-xs font-bold px-3 py-2 focus:outline-none cursor-pointer"
+          >
+            <option value="todos">Venda & Locação</option>
+            <option value="venda">Apenas Venda</option>
+            <option value="aluguel">Apenas Aluguel</option>
+          </select>
+
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-[#171717] border border-neutral-800 text-white text-xs font-semibold px-3 py-2 focus:outline-none cursor-pointer"
@@ -130,6 +143,8 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
             <option value="Mansão Urbana">Mansão Urbana</option>
             <option value="Fazenda / Campo">Fazenda / Campo</option>
             <option value="Branded Residence">Branded Residence</option>
+            <option value="Apartamento Garden">Apartamento Garden</option>
+            <option value="Terreno Exclusivo">Terreno Exclusivo</option>
           </select>
 
           <button
@@ -165,15 +180,43 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
                   }}
                 />
                 {/* Floating Badges */}
-                <div className="absolute top-3 left-3 flex items-center space-x-2">
+                <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5">
                   <span className="bg-black/90 text-white text-xs font-extrabold px-2.5 py-1 tracking-wider border border-white/10">
                     {prop.code}
+                  </span>
+                  <span className="bg-neutral-900/90 text-white text-[10px] font-bold px-2 py-0.5 tracking-wider uppercase border border-neutral-700">
+                    {prop.purpose === 'aluguel' ? 'Locação' : prop.purpose === 'ambos' ? 'Venda & Locação' : 'Venda'}
                   </span>
                   {getStatusBadge(prop.status)}
                 </div>
 
-                <div className="absolute bottom-3 right-3 bg-black/90 px-3.5 py-1.5 text-sm sm:text-base font-extrabold text-[#c8a24d] border border-[#c8a24d]/30">
-                  {formatCurrency(prop.price)}
+                <div className="absolute bottom-3 right-3 bg-black/90 px-3.5 py-1.5 border border-[#c8a24d]/30 text-right">
+                  {prop.purpose === 'aluguel' ? (
+                    <div>
+                      <span className="text-[9px] text-neutral-400 block uppercase font-bold">Locação Mensal</span>
+                      <span className="text-sm sm:text-base font-extrabold text-[#c8a24d]">
+                        {formatRentalCurrency(prop.rentalPrice || prop.price)}
+                      </span>
+                    </div>
+                  ) : prop.purpose === 'ambos' ? (
+                    <div>
+                      <span className="text-sm sm:text-base font-extrabold text-[#c8a24d] block">
+                        {formatCurrency(prop.price)}
+                      </span>
+                      {prop.rentalPrice && (
+                        <span className="text-[10px] text-neutral-300 font-bold block">
+                          Aluguel: {formatRentalCurrency(prop.rentalPrice)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-[9px] text-neutral-400 block uppercase font-bold">Preço de Venda</span>
+                      <span className="text-sm sm:text-base font-extrabold text-[#c8a24d]">
+                        {formatCurrency(prop.price)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

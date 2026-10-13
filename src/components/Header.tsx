@@ -29,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ lang, setLang, t, onOpenCRM, cur
 
   const navItems = [
     { label: t.nav.home, href: '#inicio' },
+    { label: t.nav.portfolio || 'PORTFÓLIO', href: '#portfolio' },
     { label: t.nav.consulting, href: '#consultoria' },
     { label: t.nav.acceleration, href: '#aceleracao' },
     { label: t.nav.mission, href: '#missao' },

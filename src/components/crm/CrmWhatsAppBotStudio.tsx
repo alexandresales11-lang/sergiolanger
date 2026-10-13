@@ -148,19 +148,21 @@ Objetivo de qualificação principal: ${config.qualificationGoal}.
 Instruções customizadas de treinamento:
 ${config.customInstructions}
 
-Portfólio de imóveis disponíveis para consulta confidencial:
-${properties.map((p) => `- ${p.code}: ${p.title} (${p.neighborhood}, R$ ${(p.price / 1000000).toFixed(1)}M, ${p.areaM2}m², ${p.suites} suítes)`).join('\n')}
+Portfólio de imóveis atualizado em tempo real no CRM:
+${properties.map((p) => `- [${p.code}] "${p.title}" | Finalidade: ${p.purpose === 'aluguel' ? 'Apenas Aluguel' : p.purpose === 'ambos' ? 'Venda e Aluguel' : 'Venda'} | ${p.neighborhood}, ${p.city} | Venda: R$ ${(p.price / 1000000).toFixed(1)}M | Aluguel: ${p.rentalPrice ? `R$ ${(p.rentalPrice).toLocaleString('pt-BR')}/mês` : 'N/A'} | ${p.areaM2}m² | ${p.suites} suítes`).join('\n')}
 
-Responda como se estivesse conversando no WhatsApp oficial. Seja conciso (1 a 3 parágrafos curtos), elegante, use quebras de linha limpas.`;
+Responda como se estivesse conversando no WhatsApp oficial. Seja conciso (1 a 3 parágrafos curtos), cite opções adequadas do portfólio (separando venda de aluguel quando perguntado) e use quebras de linha elegantes.`;
 
       const response = await fetch('/api/ai/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
+          properties,
           context: {
             customSystemInstruction: botSystemPrompt,
             role: 'whatsapp_bot',
+            properties,
           },
         }),
       });
@@ -292,32 +294,39 @@ Responda como se estivesse conversando no WhatsApp oficial. Seja conciso (1 a 3 
               <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                 <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
                   <Flame className="w-3.5 h-3.5 text-[#c8a24d]" />
-                  <span>Cenários Reais de Teste</span>
+                  <span>Cenários de Teste com o Portfólio</span>
                 </span>
                 <span className="text-[10px] text-neutral-400">Clique para simular o cliente</span>
               </div>
 
+              <div className="bg-emerald-950/40 border border-emerald-800/60 p-2.5 flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-[11px] font-bold text-emerald-300">
+                  Portfólio Ativo: {properties.length} imóveis (Venda & Aluguel) integrados à IA.
+                </span>
+              </div>
+
               <p className="text-[11px] text-neutral-400 leading-relaxed">
-                Clique nos botões abaixo para simular mensagens reais que compradores de alta renda enviam no WhatsApp:
+                Clique nos botões abaixo para verificar como a IA consulta o portfólio central atualizado para responder:
               </p>
 
               <div className="space-y-2">
                 {[
                   {
-                    title: 'Comprador Procurando Cobertura',
-                    text: 'Boa tarde. Vi o anúncio de vocês. Estou procurando uma cobertura nos Jardins com no mínimo 4 suítes e 600m².',
+                    title: '🔑 Consultar Imóveis para Alugar',
+                    text: 'Olá! Quais imóveis vocês têm disponíveis para aluguel no momento e qual o valor da locação?',
                   },
                   {
-                    title: 'Pergunta Direta de Preço',
-                    text: 'Qual o valor exato daquela casa no condomínio Cidade Jardim? Aceita imóvel menor como parte de pagamento?',
+                    title: '🏙️ Cobertura Triplex à Venda no Itaim Bibi',
+                    text: 'Boa tarde. Estou procurando uma cobertura de alto padrão para comprar no Itaim Bibi. Vocês têm alguma opção com piscina privativa?',
                   },
                   {
-                    title: 'Cliente Exigindo Discrição',
-                    text: 'Olá, sou assessor de uma família e precisamos de uma propriedade com heliponto e segurança armada privada.',
+                    title: '🌊 Consultar Ativo Específico (Ref: BC-880)',
+                    text: 'Vi o imóvel código BC-880 frente ao mar. Ele é para locação ou venda e o que ele tem de diferenciais?',
                   },
                   {
-                    title: 'Investidor Pedindo Cap Rate',
-                    text: 'Vocês têm lajes corporativas ou imóveis locados com renda garantida acima de 0,65% ao mês?',
+                    title: '🏰 Mansão em Rua Fechada nos Jardins',
+                    text: 'Boa tarde. Procuro uma mansão nos Jardins com terreno grande, segurança armada e cinema privativo.',
                   },
                 ].map((item, idx) => (
                   <button

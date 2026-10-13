@@ -3,6 +3,7 @@ export type Language = 'pt' | 'en' | 'es';
 export interface TranslationContent {
   nav: {
     home: string;
+    portfolio?: string;
     consulting: string;
     acceleration: string;
     mission: string;
@@ -129,15 +130,19 @@ export type PropertyType =
   | 'Apartamento Garden'
   | 'Terreno Exclusivo';
 
+export type PropertyPurpose = 'venda' | 'aluguel' | 'ambos';
+
 export interface Property {
   id: string;
   title: string;
   code: string;
   type: PropertyType;
+  purpose?: PropertyPurpose; // 'venda' | 'aluguel' | 'ambos'
+  rentalPrice?: number; // Valor mensal de aluguel em BRL
   neighborhood: string;
   city: string;
   state: string;
-  price: number; // in BRL
+  price: number; // Preço de venda em BRL
   condoFee: number;
   iptu: number;
   areaM2: number;

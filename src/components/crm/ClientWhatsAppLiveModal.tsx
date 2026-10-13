@@ -165,10 +165,12 @@ export const ClientWhatsAppLiveModal: React.FC<ClientWhatsAppLiveModalProps> = (
         body: JSON.stringify({
           client,
           property: associatedProp,
+          properties,
           scenario,
           context: {
             role: 'whatsapp_response_generator',
             lastMessage: chatMessages[chatMessages.length - 1]?.text,
+            properties,
           },
         }),
       });

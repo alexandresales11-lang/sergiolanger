@@ -33,12 +33,14 @@ import {
   PipelineStageId,
   PropertyType,
   PropertyStatus,
+  PropertyPurpose,
   ClientInteraction,
 } from '../../types';
 import {
   PIPELINE_STAGES,
   formatCurrency,
   formatCompactCurrency,
+  formatRentalCurrency,
 } from '../../data/crmData';
 
 // ==========================================
@@ -377,11 +379,41 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               }
             }}
           />
-          <div className="absolute top-4 left-4 bg-black/90 px-3 py-1 text-xs font-extrabold text-[#c8a24d] border border-[#c8a24d]/30">
-            {property.code}
+          <div className="absolute top-4 left-4 flex items-center space-x-2">
+            <span className="bg-black/90 px-3 py-1 text-xs font-extrabold text-[#c8a24d] border border-[#c8a24d]/30">
+              {property.code}
+            </span>
+            <span className="bg-neutral-900/90 px-2.5 py-1 text-[11px] font-bold text-white border border-neutral-700 uppercase tracking-wider">
+              {property.purpose === 'aluguel' ? 'Locação' : property.purpose === 'ambos' ? 'Venda & Locação' : 'Venda'}
+            </span>
           </div>
-          <div className="absolute bottom-4 right-4 bg-black/90 px-4 py-2 text-lg sm:text-xl font-extrabold text-[#c8a24d]">
-            {formatCurrency(property.price)}
+          <div className="absolute bottom-4 right-4 bg-black/90 px-4 py-2 border border-neutral-700 text-right">
+            {property.purpose === 'aluguel' ? (
+              <div>
+                <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-bold">Locação Mensal</span>
+                <span className="text-lg sm:text-xl font-extrabold text-[#c8a24d]">
+                  {formatRentalCurrency(property.rentalPrice || property.price)}
+                </span>
+              </div>
+            ) : property.purpose === 'ambos' ? (
+              <div>
+                <span className="text-lg sm:text-xl font-extrabold text-[#c8a24d] block">
+                  {formatCurrency(property.price)}
+                </span>
+                {property.rentalPrice && (
+                  <span className="text-xs text-neutral-300 font-bold block">
+                    ou {formatRentalCurrency(property.rentalPrice)}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div>
+                <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-bold">Preço de Venda</span>
+                <span className="text-lg sm:text-xl font-extrabold text-[#c8a24d]">
+                  {formatCurrency(property.price)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -392,11 +424,15 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <span className="text-xs font-bold tracking-[0.2em] text-[#c8a24d] uppercase block">
                 {property.type} • {property.neighborhood}, {property.city}
               </span>
+              <span className="text-neutral-600">•</span>
+              <span className="text-xs text-neutral-300 font-bold uppercase">
+                {property.purpose === 'aluguel' ? 'Para Alugar' : property.purpose === 'ambos' ? 'Venda e Aluguel' : 'Para Venda'}
+              </span>
               {onUpdateStatus && (
                 <select
                   value={property.status}
                   onChange={(e) => onUpdateStatus(property.id, e.target.value as PropertyStatus)}
-                  className="bg-[#1c1c1c] text-white text-xs border border-neutral-700 px-2 py-1 font-bold focus:outline-none cursor-pointer"
+                  className="bg-[#1c1c1c] text-white text-xs border border-neutral-700 px-2 py-1 font-bold focus:outline-none cursor-pointer ml-2"
                 >
                   <option value="disponivel">Disponível</option>
                   <option value="exclusividade">Exclusividade Ativa</option>
@@ -566,7 +602,9 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
   const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('SP');
+  const [purpose, setPurpose] = useState<PropertyPurpose>('venda');
   const [price, setPrice] = useState<number | ''>('');
+  const [rentalPrice, setRentalPrice] = useState<number | ''>('');
   const [areaM2, setAreaM2] = useState<number | ''>('');
   const [suites, setSuites] = useState<number | ''>('');
   const [parkingSpots, setParkingSpots] = useState<number | ''>('');
@@ -589,10 +627,12 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
     setCode('');
     setTitle('');
     setType('Penthouse / Cobertura');
+    setPurpose('venda');
     setNeighborhood('');
     setCity('');
     setState('SP');
     setPrice('');
+    setRentalPrice('');
     setAreaM2('');
     setSuites('');
     setParkingSpots('');
@@ -702,10 +742,12 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       code: finalCode,
       title: title.trim(),
       type,
+      purpose,
+      price: Number(price) || 0,
+      rentalPrice: rentalPrice !== '' ? Number(rentalPrice) : undefined,
       neighborhood: neighborhood.trim(),
       city: city.trim(),
       state: state.trim(),
-      price: Number(price) || 0,
       areaM2: Number(areaM2) || 0,
       suites: Number(suites) || 0,
       parkingSpots: Number(parkingSpots) || 0,
@@ -715,7 +757,7 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       status,
       description: description.trim() || `${type} exclusivo em ${neighborhood || 'localização nobre'}, ${city || 'SP'}. Arquitetura autoral e total discrição.`,
       highlights: highlights.length > 0 ? highlights : ['Acabamento de altíssimo padrão', 'Segurança patrimonial'],
-      smartKeywords: [type.toLowerCase(), neighborhood.toLowerCase(), city.toLowerCase(), 'luxo', 'alto padrão', ...highlights.map((h) => h.toLowerCase())],
+      smartKeywords: [type.toLowerCase(), neighborhood.toLowerCase(), city.toLowerCase(), 'luxo', 'alto padrão', purpose, ...highlights.map((h) => h.toLowerCase())],
       owner: {
         name: ownerName.trim() || 'Proprietário Confidencial',
         phone: ownerPhone.trim() || '',
@@ -783,8 +825,23 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
             </div>
           </div>
 
-          {/* Seção 2: Tipologia, Status e Localização */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {/* Seção 2: Finalidade, Tipologia, Status e Localização */}
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+            <div>
+              <label className="text-[11px] font-bold text-[#c8a24d] uppercase tracking-wider block mb-1.5">
+                Finalidade *
+              </label>
+              <select
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value as PropertyPurpose)}
+                className="w-full bg-[#181818] border border-[#c8a24d]/60 focus:border-[#c8a24d] text-[#c8a24d] text-xs px-3 py-2.5 focus:outline-none cursor-pointer font-bold"
+              >
+                <option value="venda">Venda</option>
+                <option value="aluguel">Aluguel (Locação)</option>
+                <option value="ambos">Venda e Aluguel</option>
+              </select>
+            </div>
+
             <div>
               <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">
                 Tipologia *
@@ -798,6 +855,8 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
                 <option value="Mansão Urbana">Mansão Urbana</option>
                 <option value="Fazenda / Campo">Fazenda / Campo</option>
                 <option value="Branded Residence">Branded Residence</option>
+                <option value="Apartamento Garden">Apartamento Garden</option>
+                <option value="Terreno Exclusivo">Terreno Exclusivo</option>
               </select>
             </div>
 
@@ -856,22 +915,42 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
           </div>
 
           {/* Seção 3: Valores & Metragem */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-            <div className="col-span-2 sm:col-span-1">
-              <label className="text-[11px] font-bold text-[#c8a24d] uppercase tracking-wider block mb-1.5">
-                Preço Pedido (R$) *
-              </label>
-              <input
-                type="number"
-                required
-                min={0}
-                step={10000}
-                placeholder="Ex: 25000000"
-                value={price}
-                onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none font-bold"
-              />
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+            {(purpose === 'venda' || purpose === 'ambos') && (
+              <div className={purpose === 'ambos' ? 'col-span-2 sm:col-span-1' : 'col-span-2 sm:col-span-2'}>
+                <label className="text-[11px] font-bold text-[#c8a24d] uppercase tracking-wider block mb-1.5">
+                  Preço Venda (R$) *
+                </label>
+                <input
+                  type="number"
+                  required={purpose === 'venda'}
+                  min={0}
+                  step={10000}
+                  placeholder="Ex: 25000000"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-[#181818] border border-neutral-700 focus:border-[#c8a24d] text-white text-xs px-3 py-2.5 focus:outline-none font-bold"
+                />
+              </div>
+            )}
+
+            {(purpose === 'aluguel' || purpose === 'ambos') && (
+              <div className={purpose === 'ambos' ? 'col-span-2 sm:col-span-1' : 'col-span-2 sm:col-span-2'}>
+                <label className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1.5">
+                  Aluguel (R$/mês) *
+                </label>
+                <input
+                  type="number"
+                  required={purpose === 'aluguel'}
+                  min={0}
+                  step={1000}
+                  placeholder="Ex: 65000"
+                  value={rentalPrice}
+                  onChange={(e) => setRentalPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full bg-[#181818] border border-neutral-700 focus:border-emerald-500 text-white text-xs px-3 py-2.5 focus:outline-none font-bold"
+                />
+              </div>
+            )}
 
             <div>
               <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1.5">

@@ -4,6 +4,7 @@ export const translations: Record<Language, TranslationContent> = {
   pt: {
     nav: {
       home: 'INÍCIO',
+      portfolio: 'PORTFÓLIO',
       consulting: 'CONSULTORIA',
       acceleration: 'ACELERAÇÃO',
       mission: 'MISSÃO ALTO PADRÃO',
@@ -195,6 +196,7 @@ export const translations: Record<Language, TranslationContent> = {
   en: {
     nav: {
       home: 'HOME',
+      portfolio: 'PORTFOLIO',
       consulting: 'CONSULTING',
       acceleration: 'ACCELERATION',
       mission: 'HIGH-END MISSION',
@@ -386,6 +388,7 @@ export const translations: Record<Language, TranslationContent> = {
   es: {
     nav: {
       home: 'INICIO',
+      portfolio: 'PORTAFOLIO',
       consulting: 'CONSULTORÍA',
       acceleration: 'ACELERACIÓN',
       mission: 'MISIÓN ALTO PADRÓN',

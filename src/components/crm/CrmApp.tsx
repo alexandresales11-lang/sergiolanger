@@ -104,6 +104,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
   useEffect(() => {
     let unsubClients = () => {};
     let unsubProps = () => {};
+    let unsubTeam = () => {};
 
     const initCloud = async () => {
       try {
@@ -147,7 +148,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
         );
 
         // Listen for team members updates in real-time
-        const unsubTeam = onSnapshot(
+        unsubTeam = onSnapshot(
           collection(db, TEAM_MEMBERS_COLLECTION),
           (snapshot) => {
             if (!snapshot.empty) {
@@ -166,12 +167,6 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
             console.warn('Firestore team realtime sync fallback:', err);
           }
         );
-
-        return () => {
-          unsubClients();
-          unsubProps();
-          unsubTeam();
-        };
       } catch (error) {
         console.warn('Firebase init fallback to local storage:', error);
       }
@@ -182,6 +177,7 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
     return () => {
       unsubClients();
       unsubProps();
+      unsubTeam();
     };
   }, []);
 
