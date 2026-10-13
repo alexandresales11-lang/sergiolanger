@@ -68,6 +68,36 @@
         "timestamp": { "type": "string", "description": "ISO timestamp" },
         "suggestedActions": { "type": "array", "description": "Quick action suggestions" }
       }
+    },
+    "SocialPost": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique post ID" },
+        "propertyId": { "type": "string", "description": "Associated property ID" },
+        "propertyTitle": { "type": "string", "description": "Property title snapshot" },
+        "format": { "type": "string", "description": "Post format: feed_square, story_vertical, carousel" },
+        "style": { "type": "string", "description": "Visual art theme style" },
+        "caption": { "type": "string", "description": "Instagram formatted caption with hashtags" },
+        "hashtags": { "type": "array", "description": "List of hashtags" },
+        "imageUrl": { "type": "string", "description": "Main post image URL" },
+        "images": { "type": "array", "description": "List of images for carousel format" },
+        "status": { "type": "string", "description": "Status: draft, scheduled, published, failed" },
+        "scheduledFor": { "type": "string", "description": "ISO timestamp for scheduled publication" },
+        "publishedAt": { "type": "string", "description": "ISO timestamp when post was published" },
+        "instagramPostId": { "type": "string", "description": "Instagram media ID returned by Meta API" },
+        "metrics": { "type": "object", "description": "Engagement metrics (likes, comments, reach)" },
+        "createdAt": { "type": "string", "description": "Date created" }
+      }
+    },
+    "SocialSettings": {
+      "fields": {
+        "isConnected": { "type": "boolean", "description": "Connection status with Meta Graph API" },
+        "username": { "type": "string", "description": "Instagram handle" },
+        "accountName": { "type": "string", "description": "Instagram account display name" },
+        "instagramBusinessId": { "type": "string", "description": "Meta Graph API Instagram Business Account ID" },
+        "facebookPageId": { "type": "string", "description": "Connected Facebook Page ID" },
+        "hasValidToken": { "type": "boolean", "description": "Whether an active access token is configured" },
+        "updatedAt": { "type": "string", "description": "Last configuration update timestamp" }
+      }
     }
   }
 }

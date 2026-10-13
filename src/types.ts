@@ -232,3 +232,53 @@ export interface CrmUser {
   lastLoginAt?: string;
 }
 
+// ==========================================
+// SOCIAL MARKETING & INSTAGRAM STUDIO TYPES
+// ==========================================
+
+export type SocialPostFormat = 'feed_square' | 'story_vertical' | 'carousel';
+export type SocialPostStatus = 'draft' | 'scheduled' | 'published';
+export type SocialCaptionTone = 'luxury' | 'storytelling' | 'investment';
+export type SocialArtTheme = 'dark_gold' | 'minimal_white' | 'editorial_champagne';
+
+export interface SocialPost {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  propertyCode: string;
+  propertyNeighborhood?: string;
+  propertyCity?: string;
+  propertyPrice?: number;
+  format: SocialPostFormat;
+  status: SocialPostStatus;
+  caption: string;
+  hashtags: string[];
+  imageUrl: string;
+  scheduledFor?: string; // YYYY-MM-DDTHH:mm
+  publishedAt?: string;
+  theme: SocialArtTheme;
+  showPrice: boolean;
+  customBadge: string;
+  agentName?: string;
+  agentCreci?: string;
+  likesCount?: number;
+  commentsCount?: number;
+  createdAt: string;
+  instagramPostId?: string;
+  selectedSlideIndex?: number;
+}
+
+export interface InstagramAccountConfig {
+  isConnected: boolean;
+  username: string;
+  profileName: string;
+  followersCount: number;
+  avatarUrl?: string;
+  facebookPageId?: string;
+  instagramAccountId?: string;
+  accessTokenMasked?: string;
+  lastSync?: string;
+  autoHashtags: boolean;
+  includeWatermark: boolean;
+}
+

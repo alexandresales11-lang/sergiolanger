@@ -13,6 +13,7 @@ import {
   Share2,
   DollarSign,
   Tag,
+  Instagram,
 } from 'lucide-react';
 import { Property, PropertyStatus, PropertyType, PropertyPurpose } from '../../types';
 import { formatCurrency, formatCompactCurrency, formatRentalCurrency } from '../../data/crmData';
@@ -23,6 +24,7 @@ interface CrmPropertiesPortfolioProps {
   onOpenNewProperty: () => void;
   onTriggerSmartMatchForProperty: (property: Property) => void;
   onSharePropertyWhatsApp: (property: Property) => void;
+  onOpenSocialMarketing?: (property: Property) => void;
 }
 
 export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
@@ -31,6 +33,7 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
   onOpenNewProperty,
   onTriggerSmartMatchForProperty,
   onSharePropertyWhatsApp,
+  onOpenSocialMarketing,
 }) => {
   const [purposeFilter, setPurposeFilter] = useState<string>('todos');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -278,6 +281,16 @@ export const CrmPropertiesPortfolio: React.FC<CrmPropertiesPortfolioProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Smart Match</span>
               </button>
+
+              {onOpenSocialMarketing && (
+                <button
+                  onClick={() => onOpenSocialMarketing(prop)}
+                  className="p-2.5 bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-400 border border-pink-500/40 transition-colors cursor-pointer"
+                  title="Criar Arte & Post Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 onClick={() => onSharePropertyWhatsApp(prop)}

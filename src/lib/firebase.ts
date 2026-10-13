@@ -12,7 +12,7 @@ import {
   orderBy,
   writeBatch
 } from 'firebase/firestore';
-import { ClientVIP, Property, CrmUser } from '../types';
+import { ClientVIP, Property, CrmUser, SocialPost, InstagramAccountConfig } from '../types';
 import { INITIAL_PROPERTIES, INITIAL_CLIENTS } from '../data/crmData';
 
 // Configuração do Firebase carregada de forma segura
@@ -34,6 +34,8 @@ export const CLIENTS_COLLECTION = 'vip_clients';
 export const PROPERTIES_COLLECTION = 'luxury_properties';
 export const AI_MESSAGES_COLLECTION = 'ai_chat_history';
 export const TEAM_MEMBERS_COLLECTION = 'team_members';
+export const SOCIAL_POSTS_COLLECTION = 'social_marketing_posts';
+export const SOCIAL_SETTINGS_COLLECTION = 'social_settings';
 
 /**
  * Inicializa os dados no Firestore se as coleções estiverem vazias
@@ -203,5 +205,88 @@ export async function getTeamMembersFromFirestore(): Promise<CrmUser[]> {
   } catch (err) {
     console.warn('Fallback ao ler colaboradores do Firestore:', err);
     return [];
+  }
+}
+
+/**
+ * Salva ou atualiza um post de rede social no Firestore
+ */
+export async function saveSocialPostToFirestore(post: SocialPost): Promise<void> {
+  try {
+    const cleaned = cleanForFirestore(post);
+    const postRef = doc(db, SOCIAL_POSTS_COLLECTION, post.id);
+    await setDoc(postRef, cleaned, { merge: true });
+    console.log(`[Firestore] Post de mídia social salvo: ${post.id}`);
+  } catch (err) {
+    console.error('Erro ao salvar post no Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Remove um post de rede social do Firestore
+ */
+export async function deleteSocialPostFromFirestore(postId: string): Promise<void> {
+  try {
+    const postRef = doc(db, SOCIAL_POSTS_COLLECTION, postId);
+    await deleteDoc(postRef);
+    console.log(`[Firestore] Post de mídia social excluído: ${postId}`);
+  } catch (err) {
+    console.error('Erro ao excluir post no Firestore:', err);
+    throw err;
+  }
+}
+
+/**
+ * Busca todos os posts de rede social do Firestore
+ */
+export async function getSocialPostsFromFirestore(): Promise<SocialPost[]> {
+  try {
+    const postsRef = collection(db, SOCIAL_POSTS_COLLECTION);
+    const snap = await getDocs(postsRef);
+    if (snap.empty) return [];
+    const posts: SocialPost[] = [];
+    snap.forEach((docSnap) => {
+      posts.push(docSnap.data() as SocialPost);
+    });
+    return posts;
+  } catch (err) {
+    console.warn('Fallback ao ler posts de rede social:', err);
+    return [];
+  }
+}
+
+/**
+ * Salva as configurações de integração com o Instagram
+ */
+export async function saveInstagramConfigToFirestore(config: InstagramAccountConfig): Promise<void> {
+  try {
+    const cleaned = cleanForFirestore(config);
+    const configRef = doc(db, SOCIAL_SETTINGS_COLLECTION, 'instagram_account');
+    await setDoc(configRef, cleaned, { merge: true });
+  } catch (err) {
+    console.error('Erro ao salvar configurações do Instagram:', err);
+    throw err;
+  }
+}
+
+/**
+ * Carrega as configurações de integração com o Instagram
+ */
+export async function getInstagramConfigFromFirestore(): Promise<InstagramAccountConfig | null> {
+  try {
+    const configRef = doc(db, SOCIAL_SETTINGS_COLLECTION, 'instagram_account');
+    const snap = await getDocs(collection(db, SOCIAL_SETTINGS_COLLECTION));
+    if (snap.empty) return null;
+    let found: InstagramAccountConfig | null = null;
+    snap.forEach((d) => {
+      if (d.id === 'instagram_account') {
+        found = d.data() as InstagramAccountConfig;
+      }
+    });
+    return found;
+  } catch (err) {
+    console.warn('Fallback ao ler configurações do Instagram:', err);
+    return null;
   }
 }

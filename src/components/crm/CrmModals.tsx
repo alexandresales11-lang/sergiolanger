@@ -27,6 +27,7 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  Instagram,
 } from 'lucide-react';
 import {
   ClientVIP,
@@ -341,6 +342,7 @@ interface PropertyDetailModalProps {
   onShareWhatsApp: (property: Property) => void;
   onDeleteProperty?: (propertyId: string) => void;
   onUpdateStatus?: (propertyId: string, status: PropertyStatus) => void;
+  onOpenSocialMarketing?: (property: Property) => void;
 }
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
@@ -350,6 +352,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onShareWhatsApp,
   onDeleteProperty,
   onUpdateStatus,
+  onOpenSocialMarketing,
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -448,6 +451,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {onOpenSocialMarketing && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenSocialMarketing(property);
+                }}
+                className="flex items-center space-x-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-xs py-2.5 px-4 uppercase tracking-wider transition-colors cursor-pointer"
+                title="Criar arte e post para Instagram"
+              >
+                <Instagram className="w-4 h-4" />
+                <span>Instagram & Post</span>
+              </button>
+            )}
+
             <button
               onClick={() => onTriggerSmartMatch(property)}
               className="flex items-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-bold text-xs py-2.5 px-4 uppercase tracking-wider transition-colors cursor-pointer"

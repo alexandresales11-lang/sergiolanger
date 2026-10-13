@@ -30,12 +30,13 @@ import {
   DEFAULT_TEAM_MEMBERS,
 } from '../../lib/authService';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { CrmHeader } from './CrmHeader';
+import { CrmHeader, CrmTabId } from './CrmHeader';
 import { CrmDashboard } from './CrmDashboard';
 import { CrmPipelineKanban } from './CrmPipelineKanban';
 import { CrmPropertiesPortfolio } from './CrmPropertiesPortfolio';
 import { CrmClientsList } from './CrmClientsList';
 import { CrmSmartMatchStudio } from './CrmSmartMatchStudio';
+import { CrmSocialMarketingStudio } from './CrmSocialMarketingStudio';
 import { CrmAiCopilot } from './CrmAiCopilot';
 import { CrmWhatsAppBotStudio } from './CrmWhatsAppBotStudio';
 import { CrmTeamManagement } from './CrmTeamManagement';
@@ -56,10 +57,9 @@ interface CrmAppProps {
 }
 
 export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLogout }) => {
-  // Tabs: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team'
-  const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team'
-  >('dashboard');
+  // Tabs: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'social_marketing' | 'ai_copilot' | 'whatsapp_bot' | 'team'
+  const [currentTab, setCurrentTab] = useState<CrmTabId>('dashboard');
+  const [selectedSocialProperty, setSelectedSocialProperty] = useState<Property | null>(null);
 
   // Team Members State for Access Control & Whitelist
   const [teamMembers, setTeamMembers] = useState<CrmUser[]>(() => {
@@ -577,6 +577,19 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
               setCurrentTab('smart_match');
             }}
             onSharePropertyWhatsApp={handleTriggerPropertyWhatsApp}
+            onOpenSocialMarketing={(property) => {
+              setSelectedSocialProperty(property);
+              setCurrentTab('social_marketing');
+            }}
+          />
+        )}
+
+        {currentTab === 'social_marketing' && (
+          <CrmSocialMarketingStudio
+            properties={properties}
+            currentUser={currentUser}
+            initialProperty={selectedSocialProperty}
+            onSelectPropertyDetail={setSelectedProperty}
           />
         )}
 
@@ -674,6 +687,10 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
         onShareWhatsApp={handleTriggerPropertyWhatsApp}
         onDeleteProperty={handleDeleteProperty}
         onUpdateStatus={handleUpdatePropertyStatus}
+        onOpenSocialMarketing={(property) => {
+          setSelectedSocialProperty(property);
+          setCurrentTab('social_marketing');
+        }}
       />
 
       <NewPropertyModal

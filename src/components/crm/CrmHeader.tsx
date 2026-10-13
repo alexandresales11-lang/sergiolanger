@@ -16,13 +16,26 @@ import {
   ShieldCheck,
   Smartphone,
   LogOut,
+  Instagram,
+  Share2,
 } from 'lucide-react';
 import { formatCompactCurrency } from '../../data/crmData';
 import { CrmUser } from '../../types';
 
+export type CrmTabId =
+  | 'dashboard'
+  | 'pipeline'
+  | 'properties'
+  | 'clients'
+  | 'smart_match'
+  | 'social_marketing'
+  | 'ai_copilot'
+  | 'whatsapp_bot'
+  | 'team';
+
 interface CrmHeaderProps {
-  currentTab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team';
-  setCurrentTab: (tab: 'dashboard' | 'pipeline' | 'properties' | 'clients' | 'smart_match' | 'ai_copilot' | 'whatsapp_bot' | 'team') => void;
+  currentTab: CrmTabId;
+  setCurrentTab: (tab: CrmTabId) => void;
   onBackToSite: () => void;
   totalVGV: number;
   totalClients: number;
@@ -57,10 +70,11 @@ export const CrmHeader: React.FC<CrmHeaderProps> = ({
     { id: 'dashboard', label: 'Dashboard Executivo', icon: TrendingUp },
     { id: 'pipeline', label: 'Pipeline VIP (Kanban)', icon: Layers },
     { id: 'properties', label: 'Portfólio Exclusivo', icon: Building2 },
+    { id: 'social_marketing', label: 'Instagram & Mídia', icon: Instagram, badge: 'AUTO POST', highlight: true },
     { id: 'clients', label: 'Clientes VIP', icon: Users },
     { id: 'team', label: 'Equipe & Acessos', icon: ShieldCheck, badge: 'GESTÃO' },
     { id: 'smart_match', label: 'Smart Match Studio', icon: Sparkles, badge: 'ALGORÍTMICO' },
-    { id: 'whatsapp_bot', label: 'Agente WhatsApp Bot', icon: Smartphone, badge: 'WHATSAPP IA', highlight: true },
+    { id: 'whatsapp_bot', label: 'Agente WhatsApp Bot', icon: Smartphone, badge: 'WHATSAPP IA' },
     { id: 'ai_copilot', label: 'Copiloto de Vendas', icon: Bot, badge: 'GEMINI 3.7' },
   ];
 
