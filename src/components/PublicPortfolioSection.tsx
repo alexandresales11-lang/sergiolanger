@@ -68,7 +68,15 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
           if (!snapshot.empty) {
             const list: Property[] = [];
             snapshot.forEach((doc) => {
-              list.push(doc.data() as Property);
+              const data = doc.data() as Property;
+              list.push({ ...data, id: data.id || doc.id });
+            });
+            // Ordena imóveis mais novos primeiro para manter posição consistente
+            list.sort((a, b) => {
+              const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              if (timeB !== timeA) return timeB - timeA;
+              return b.id.localeCompare(a.id);
             });
             setProperties(list);
             setIsCloudSynced(true);

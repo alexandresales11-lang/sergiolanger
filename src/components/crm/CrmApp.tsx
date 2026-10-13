@@ -136,7 +136,15 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
             if (!snapshot.empty) {
               const loadedProps: Property[] = [];
               snapshot.forEach((doc) => {
-                loadedProps.push(doc.data() as Property);
+                const data = doc.data() as Property;
+                loadedProps.push({ ...data, id: data.id || doc.id });
+              });
+              // Ordena imóveis mais novos primeiro para evitar pulos visuais
+              loadedProps.sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                if (timeB !== timeA) return timeB - timeA;
+                return b.id.localeCompare(a.id);
               });
               setProperties(loadedProps);
               localStorage.setItem('sergio_langer_crm_properties', JSON.stringify(loadedProps));
