@@ -17,6 +17,8 @@
         "code": { "type": "string", "description": "Unique MLS/Off-market code (e.g. SL-101)" },
         "title": { "type": "string", "description": "Property title" },
         "type": { "type": "string", "description": "Property typology" },
+        "purpose": { "type": "string", "description": "Property commercial purpose (venda, aluguel, ambos)" },
+        "rentalPrice": { "type": "number", "description": "Monthly rental price in BRL (optional)" },
         "neighborhood": { "type": "string", "description": "Neighborhood" },
         "city": { "type": "string", "description": "City" },
         "state": { "type": "string", "description": "State" },

@@ -1,5 +1,5 @@
 import { CrmUser } from '../types';
-import { db, TEAM_MEMBERS_COLLECTION } from './firebase';
+import { db, TEAM_MEMBERS_COLLECTION, cleanForFirestore } from './firebase';
 import {
   collection,
   doc,
@@ -92,7 +92,7 @@ export async function getTeamWhitelist(): Promise<CrmUser[]> {
 export async function registerOrUpdateMember(member: CrmUser): Promise<void> {
   try {
     const memberRef = doc(db, TEAM_MEMBERS_COLLECTION, member.id);
-    await setDoc(memberRef, member, { merge: true });
+    await setDoc(memberRef, cleanForFirestore(member), { merge: true });
   } catch (err) {
     console.warn('Erro ao salvar no Firestore, salvando localmente:', err);
   }

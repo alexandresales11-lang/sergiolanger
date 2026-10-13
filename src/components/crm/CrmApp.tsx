@@ -201,6 +201,14 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
   const [whatsAppPropertyTarget, setWhatsAppPropertyTarget] = useState<Property | null>(null);
   const [liveChatClient, setLiveChatClient] = useState<ClientVIP | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((current) => (current === msg ? null : current));
+    }, 4500);
+  };
 
   // Send WhatsApp message from within CRM and update client history
   const handleSendLiveChatMessage = async (clientId: string, message: WhatsAppChatMessage) => {
@@ -368,26 +376,34 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
 
   // Save new property
   const handleSaveProperty = async (newProperty: Property) => {
-    setProperties((prev) => [newProperty, ...prev]);
-
     try {
+      // Salva no Firestore primeiro com sanitização completa
       await savePropertyToFirestore(newProperty);
-    } catch (e) {
-      console.warn('Fallback: Property saved locally only');
+
+      // Atualiza o estado local e localStorage
+      setProperties((prev) => {
+        const filtered = prev.filter((p) => p.id !== newProperty.id);
+        return [newProperty, ...filtered];
+      });
+      showToast(`✓ Imóvel "${newProperty.code}" salvo com sucesso na nuvem e sincronizado com o site!`);
+    } catch (e: any) {
+      console.error('Erro ao salvar imóvel no Firestore:', e);
+      throw e;
     }
   };
 
   // Delete property
   const handleDeleteProperty = async (propertyId: string) => {
-    setProperties((prev) => prev.filter((p) => p.id !== propertyId));
-    if (selectedProperty && selectedProperty.id === propertyId) {
-      setSelectedProperty(null);
-    }
-
     try {
       await deletePropertyFromFirestore(propertyId);
+      setProperties((prev) => prev.filter((p) => p.id !== propertyId));
+      if (selectedProperty && selectedProperty.id === propertyId) {
+        setSelectedProperty(null);
+      }
+      showToast('✓ Imóvel removido do portfólio no Firestore e no site.');
     } catch (e) {
-      console.warn('Fallback: Property deleted locally only');
+      console.error('Erro ao excluir imóvel no Firestore:', e);
+      showToast('❌ Erro ao excluir imóvel do Firestore.');
     }
   };
 
@@ -404,8 +420,9 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
 
     try {
       await savePropertyToFirestore(updatedProp);
+      showToast(`✓ Status do imóvel "${prop.code}" atualizado na nuvem para ${status.toUpperCase()}.`);
     } catch (e) {
-      console.warn('Fallback: Property status updated locally only');
+      console.warn('Fallback: Property status updated locally only:', e);
     }
   };
 
@@ -678,6 +695,14 @@ export const CrmApp: React.FC<CrmAppProps> = ({ onBackToSite, currentUser, onLog
         onSendMessage={handleSendLiveChatMessage}
         onSyncHistory={handleSyncLiveChatHistory}
       />
+
+      {/* Floating Sync & Cloud Notification Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-3 bg-neutral-900 border border-[#c8a24d] text-white px-5 py-3.5 shadow-2xl animate-fade-in text-xs font-semibold">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };

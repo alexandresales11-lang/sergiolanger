@@ -33,7 +33,16 @@ interface PublicPortfolioSectionProps {
 }
 
 export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ onOpenModal }) => {
-  const [properties, setProperties] = useState<Property[]>(INITIAL_PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>(() => {
+    const saved = localStorage.getItem('sergio_langer_crm_properties');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return INITIAL_PROPERTIES;
+  });
   const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
   const [activePurpose, setActivePurpose] = useState<'todos' | 'venda' | 'aluguel'>('todos');
   const [selectedType, setSelectedType] = useState<string>('todos');
@@ -63,13 +72,15 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
             });
             setProperties(list);
             setIsCloudSynced(true);
+            try {
+              localStorage.setItem('sergio_langer_crm_properties', JSON.stringify(list));
+            } catch {}
           } else {
             setProperties(INITIAL_PROPERTIES);
           }
         },
         (error) => {
           console.warn('Real-time portfolio sync offline, fallback to local data:', error);
-          setProperties(INITIAL_PROPERTIES);
         }
       );
     } catch (e) {

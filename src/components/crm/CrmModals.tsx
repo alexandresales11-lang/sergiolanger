@@ -26,6 +26,7 @@ import {
   Link as LinkIcon,
   Check,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ClientVIP,
@@ -587,7 +588,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 interface NewPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveProperty: (property: Property) => void;
+  onSaveProperty: (property: Property) => Promise<void> | void;
 }
 
 export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
@@ -615,6 +616,8 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
   const [uploadFileName, setUploadFileName] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [status, setStatus] = useState<PropertyStatus>('exclusividade');
   const [description, setDescription] = useState('');
   const [highlightsInput, setHighlightsInput] = useState('');
@@ -674,8 +677,8 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1280;
-          const MAX_HEIGHT = 850;
+          const MAX_WIDTH = 1000;
+          const MAX_HEIGHT = 700;
           let width = img.width;
           let height = img.height;
 
@@ -696,7 +699,7 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
             setImageUrl(dataUrl);
             setUploadError(null);
           } else {
@@ -725,9 +728,12 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || isSaving) return;
+
+    setSaveError(null);
+    setIsSaving(true);
 
     const highlights = highlightsInput
       .split(',')
@@ -737,6 +743,8 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
     const finalCode = code.trim() || `SL-${Math.floor(100 + Math.random() * 900)}`;
     const finalImageUrl = imageUrl.trim() || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80';
 
+    const parsedRental = rentalPrice !== '' && Number(rentalPrice) > 0 ? Number(rentalPrice) : undefined;
+
     const newProperty: Property = {
       id: `prop-${Date.now()}`,
       code: finalCode,
@@ -744,7 +752,7 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       type,
       purpose,
       price: Number(price) || 0,
-      rentalPrice: rentalPrice !== '' ? Number(rentalPrice) : undefined,
+      ...(parsedRental !== undefined ? { rentalPrice: parsedRental } : {}),
       neighborhood: neighborhood.trim(),
       city: city.trim(),
       state: state.trim(),
@@ -767,9 +775,16 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
       createdAt: new Date().toISOString().slice(0, 10),
     };
 
-    onSaveProperty(newProperty);
-    resetForm();
-    onClose();
+    try {
+      await onSaveProperty(newProperty);
+      resetForm();
+      onClose();
+    } catch (err: any) {
+      console.error('Falha ao cadastrar imóvel no Firestore:', err);
+      setSaveError(err?.message || 'Falha ao sincronizar com o Firestore. Verifique sua conexão e tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -792,6 +807,13 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
         <h2 className="text-2xl font-extrabold text-white mb-6">
           Cadastrar Imóvel no Portfólio VIP
         </h2>
+
+        {saveError && (
+          <div className="mb-6 p-4 bg-rose-950/80 border border-rose-700 text-rose-200 text-xs flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <span>{saveError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Seção 1: Identificação Básica */}
@@ -1398,10 +1420,20 @@ export const NewPropertyModal: React.FC<NewPropertyModalProps> = ({
 
             <button
               type="submit"
-              className="flex items-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] text-black font-extrabold text-xs px-6 py-2.5 uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
+              disabled={isSaving}
+              className="flex items-center space-x-2 bg-[#c8a24d] hover:bg-[#b8933e] disabled:opacity-60 text-black font-extrabold text-xs px-6 py-2.5 uppercase tracking-wider transition-colors cursor-pointer shadow-lg"
             >
-              <Plus className="w-4 h-4" />
-              <span>Cadastrar Imóvel no Portfólio</span>
+              {isSaving ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Salvando na Nuvem...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  <span>Cadastrar Imóvel no Portfólio</span>
+                </>
+              )}
             </button>
           </div>
         </form>

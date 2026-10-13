@@ -82,12 +82,36 @@ export async function seedDatabaseIfEmpty(): Promise<{ seeded: boolean; clientsC
 }
 
 /**
+ * Remove recursivamente todas as chaves com valor undefined
+ * para evitar erros do Firestore (Unsupported field value: undefined)
+ */
+export function cleanForFirestore<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(cleanForFirestore) as unknown as T;
+  }
+  if (typeof obj === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = cleanForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
+/**
  * Salva ou atualiza um cliente no Firestore
  */
 export async function saveClientToFirestore(client: ClientVIP): Promise<void> {
   try {
+    const cleaned = cleanForFirestore(client);
     const clientRef = doc(db, CLIENTS_COLLECTION, client.id);
-    await setDoc(clientRef, client, { merge: true });
+    await setDoc(clientRef, cleaned, { merge: true });
   } catch (err) {
     console.error('Erro ao salvar cliente no Firestore:', err);
     throw err;
@@ -99,8 +123,10 @@ export async function saveClientToFirestore(client: ClientVIP): Promise<void> {
  */
 export async function savePropertyToFirestore(property: Property): Promise<void> {
   try {
+    const cleaned = cleanForFirestore(property);
     const propRef = doc(db, PROPERTIES_COLLECTION, property.id);
-    await setDoc(propRef, property, { merge: true });
+    await setDoc(propRef, cleaned, { merge: true });
+    console.log(`[Firestore] Imóvel salvo na nuvem com sucesso: ${property.id} (${property.title})`);
   } catch (err) {
     console.error('Erro ao salvar imóvel no Firestore:', err);
     throw err;
@@ -127,6 +153,7 @@ export async function deletePropertyFromFirestore(propertyId: string): Promise<v
   try {
     const propRef = doc(db, PROPERTIES_COLLECTION, propertyId);
     await deleteDoc(propRef);
+    console.log(`[Firestore] Imóvel excluído na nuvem: ${propertyId}`);
   } catch (err) {
     console.error('Erro ao excluir imóvel no Firestore:', err);
     throw err;
@@ -138,8 +165,9 @@ export async function deletePropertyFromFirestore(propertyId: string): Promise<v
  */
 export async function saveTeamMemberToFirestore(member: CrmUser): Promise<void> {
   try {
+    const cleaned = cleanForFirestore(member);
     const memberRef = doc(db, TEAM_MEMBERS_COLLECTION, member.id);
-    await setDoc(memberRef, member, { merge: true });
+    await setDoc(memberRef, cleaned, { merge: true });
   } catch (err) {
     console.error('Erro ao salvar colaborador no Firestore:', err);
     throw err;
