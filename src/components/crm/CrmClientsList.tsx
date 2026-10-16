@@ -157,10 +157,14 @@ export const CrmClientsList: React.FC<CrmClientsListProps> = ({
                         {client.phone} • {client.email}
                       </div>
                       <div className="flex flex-wrap gap-1 mt-1.5">
-                        {client.tags.slice(0, 2).map((tag, idx) => (
+                        {client.tags.slice(0, 3).map((tag, idx) => (
                           <span
                             key={idx}
-                            className="bg-neutral-800 text-neutral-400 text-[10px] px-1.5 py-0.2 rounded"
+                            className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
+                              tag.toLowerCase().includes('site')
+                                ? 'bg-[#c8a24d]/20 text-[#c8a24d] border border-[#c8a24d]/40'
+                                : 'bg-neutral-800 text-neutral-400'
+                            }`}
                           >
                             {tag}
                           </span>

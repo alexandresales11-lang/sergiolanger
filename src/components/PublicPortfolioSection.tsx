@@ -24,9 +24,10 @@ import {
   Radio,
 } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db, PROPERTIES_COLLECTION, CLIENTS_COLLECTION, saveClientToFirestore } from '../lib/firebase';
+import { db, PROPERTIES_COLLECTION, CLIENTS_COLLECTION, saveClientToFirestore, captureWebsiteLead } from '../lib/firebase';
 import { Property, PropertyPurpose, PropertyType, ClientVIP } from '../types';
 import { INITIAL_PROPERTIES, formatCurrency, formatRentalCurrency } from '../data/crmData';
+import { VipConciergeModal } from './VipConciergeModal';
 
 interface PublicPortfolioSectionProps {
   onOpenModal?: (subject?: string) => void;
@@ -48,6 +49,7 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
   const [selectedType, setSelectedType] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [conciergeProperty, setConciergeProperty] = useState<Property | null>(null);
 
   // Lead interest form inside public modal
   const [leadName, setLeadName] = useState('');
@@ -56,6 +58,7 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
   const [leadMessage, setLeadMessage] = useState('');
   const [leadSuccess, setLeadSuccess] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [modalWhatsAppUrl, setModalWhatsAppUrl] = useState<string | null>(null);
 
   // Real-time Firestore sync: updates instantly whenever CRM updates!
   useEffect(() => {
@@ -123,60 +126,77 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
   });
 
   const handleOpenWhatsApp = (prop: Property) => {
-    const purposeText = prop.purpose === 'aluguel' ? 'locação' : prop.purpose === 'ambos' ? 'venda/locação' : 'aquisição';
-    const msg = `Olá! Gostaria de mais informações confidenciais sobre o imóvel *${prop.title}* (Cód: *${prop.code}*), anunciado para *${purposeText}* no portfólio de alto padrão Sergio Langer.`;
-    const url = `https://wa.me/5511998887766?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    setConciergeProperty(prop);
   };
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProperty || !leadName.trim() || !leadPhone.trim()) return;
+    if (!selectedProperty || !leadName.trim() || !leadPhone.trim() || leadSubmitting) return;
 
     setLeadSubmitting(true);
     try {
+      const now = new Date();
+      const dateStr = `${now.toISOString().slice(0, 10)} ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const estimatedPrice = selectedProperty.price || 15000000;
+
       const newLead: ClientVIP = {
         id: `lead-site-${Date.now()}`,
         name: leadName.trim(),
         phone: leadPhone.trim(),
-        email: leadEmail.trim() || 'cliente@portal.com.br',
+        email: leadEmail.trim() || `${leadName.trim().toLowerCase().replace(/[^a-z0-9]/g, '.')}@cliente-site.com.br`,
         profile: 'Comprador Final',
-        targetBudgetMin: selectedProperty.price ? Math.floor(selectedProperty.price * 0.8) : 5000000,
-        targetBudgetMax: selectedProperty.price ? Math.floor(selectedProperty.price * 1.2) : 20000000,
+        targetBudgetMin: Math.floor(estimatedPrice * 0.8),
+        targetBudgetMax: Math.floor(estimatedPrice * 1.25),
         preferredNeighborhoods: [selectedProperty.neighborhood],
         preferredTypes: [selectedProperty.type],
         stage: 'lead_recebido',
         associatedPropertyId: selectedProperty.id,
         assignedBroker: 'Sergio Langer',
-        estimatedDealValue: selectedProperty.price || 15000000,
-        expectedCommission: Math.floor((selectedProperty.price || 15000000) * 0.06),
+        estimatedDealValue: estimatedPrice,
+        expectedCommission: Math.floor(estimatedPrice * 0.06),
         urgency: 'Alta',
         liquidityStatus: '100% Líquido / À Vista',
-        notes: `Lead originado do formulário público do imóvel ${selectedProperty.code} (${selectedProperty.title}). Mensagem do cliente: "${leadMessage.trim() || 'Desejo receber o dossiê e agendar visita técnica confidencial'}"`,
-        tags: ['Site Público', selectedProperty.code, selectedProperty.neighborhood, selectedProperty.purpose || 'Venda'],
+        notes: `Lead originado do formulário do dossiê no site. Imóvel: ${selectedProperty.code} - ${selectedProperty.title} (${selectedProperty.neighborhood}). Mensagem: "${leadMessage.trim() || 'Desejo receber o dossiê confidencial e agendar visita técnica.'}"`,
+        tags: ['Site Portfólio', 'Lead do Site', selectedProperty.code, selectedProperty.neighborhood, selectedProperty.purpose || 'Venda'],
         interactions: [
           {
             id: `int-${Date.now()}`,
-            date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-            type: 'note',
-            author: 'Sistema Público',
-            content: `Solicitação de dossiê do imóvel ${selectedProperty.code}`,
+            date: dateStr,
+            type: 'whatsapp',
+            author: 'Concierge Digital',
+            content: `Solicitação de dossiê do imóvel ${selectedProperty.code} (${selectedProperty.title})`,
           },
         ],
-        createdAt: new Date().toISOString().slice(0, 10),
+        chatHistory: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: 'client',
+            senderName: leadName.trim(),
+            text: `Olá Sergio Langer! Me chamo ${leadName.trim()}. Solicitei o dossiê do imóvel ${selectedProperty.title} (Cód: ${selectedProperty.code}) no seu portfólio. "${leadMessage.trim() || 'Gostaria de receber a apresentação completa.'}"`,
+            timestamp: timeStr,
+            status: 'sent',
+            propertyCode: selectedProperty.code,
+          },
+        ],
+        createdAt: now.toISOString().slice(0, 10),
       };
 
-      await saveClientToFirestore(newLead);
+      await captureWebsiteLead(newLead);
+
+      const msg = `Olá Sergio Langer! Me chamo *${leadName.trim()}*. Acabei de solicitar o dossiê do imóvel *${selectedProperty.title}* (Cód: *${selectedProperty.code}*) no seu site.\n\n"${leadMessage.trim() || 'Gostaria de receber a apresentação completa e conversar.'}"`;
+      const waUrl = `https://wa.me/5511998887766?text=${encodeURIComponent(msg)}`;
+      setModalWhatsAppUrl(waUrl);
       setLeadSuccess(true);
+
+      // Abre automaticamente a conversa em nova aba
       setTimeout(() => {
-        setLeadSuccess(false);
-        setLeadName('');
-        setLeadPhone('');
-        setLeadEmail('');
-        setLeadMessage('');
-      }, 4000);
+        try {
+          window.open(waUrl, '_blank', 'noopener,noreferrer');
+        } catch {}
+      }, 500);
     } catch (err) {
-      console.warn('Erro ao salvar lead:', err);
+      console.warn('Erro ao salvar lead no CRM:', err);
       setLeadSuccess(true);
     } finally {
       setLeadSubmitting(false);
@@ -423,11 +443,11 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
                   </button>
 
                   <button
-                    onClick={() => handleOpenWhatsApp(prop)}
-                    className="w-full flex items-center justify-center space-x-1.5 bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold py-2.5 px-3 transition-colors uppercase tracking-wider cursor-pointer"
+                    onClick={() => setConciergeProperty(prop)}
+                    className="w-full flex items-center justify-center space-x-1.5 bg-[#15803d] hover:bg-[#166534] text-white text-xs font-bold py-2.5 px-3 transition-colors uppercase tracking-wider cursor-pointer shadow-sm"
                   >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>WhatsApp</span>
+                    <MessageCircle className="w-3.5 h-3.5 fill-white" />
+                    <span>WhatsApp VIP</span>
                   </button>
                 </div>
               </div>
@@ -627,14 +647,27 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
                 </p>
 
                 {leadSuccess ? (
-                  <div className="bg-emerald-950/80 border border-emerald-700 p-4 text-center space-y-2">
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                    <p className="text-xs font-bold text-white">
-                      Solicitação registrada com sucesso!
+                  <div className="bg-emerald-950/80 border border-emerald-700 p-5 text-center space-y-3">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
+                    <p className="text-sm font-bold text-white">
+                      Solicitação registrada com sucesso no CRM!
                     </p>
-                    <p className="text-[11px] text-emerald-200">
-                      Um de nossos consultores private entrará em contato em instantes no WhatsApp informado.
+                    <p className="text-xs text-emerald-200 leading-relaxed">
+                      Olá <strong>{leadName}</strong>, seus dados já foram integrados diretamente à mesa de atendimento de Sergio Langer.
                     </p>
+                    {modalWhatsAppUrl && (
+                      <div className="pt-2">
+                        <a
+                          href={modalWhatsAppUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full inline-flex items-center justify-center space-x-2 bg-[#15803d] hover:bg-[#166534] text-white text-xs font-extrabold py-3.5 px-4 uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                        >
+                          <MessageCircle className="w-4 h-4 fill-white" />
+                          <span>Abrir WhatsApp com Sergio Langer</span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <form onSubmit={handleLeadSubmit} className="space-y-3">
@@ -695,9 +728,9 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
                     <button
                       type="submit"
                       disabled={leadSubmitting}
-                      className="w-full bg-[#c8a24d] hover:bg-[#b8933e] text-black text-xs font-extrabold py-3 uppercase tracking-wider transition-colors cursor-pointer mt-2"
+                      className="w-full bg-[#c8a24d] hover:bg-[#b8933e] text-black text-xs font-extrabold py-3.5 uppercase tracking-wider transition-colors cursor-pointer mt-2 disabled:opacity-50"
                     >
-                      {leadSubmitting ? 'Registrando...' : 'Solicitar Apresentação Privada'}
+                      {leadSubmitting ? 'Registrando no CRM...' : 'Solicitar Apresentação Privada'}
                     </button>
                   </form>
                 )}
@@ -706,6 +739,13 @@ export const PublicPortfolioSection: React.FC<PublicPortfolioSectionProps> = ({ 
           </div>
         </div>
       )}
+
+      {/* Dedicated VIP Concierge Modal for 1-Click WhatsApp Lead Capture */}
+      <VipConciergeModal
+        isOpen={!!conciergeProperty}
+        property={conciergeProperty}
+        onClose={() => setConciergeProperty(null)}
+      />
     </section>
   );
 };

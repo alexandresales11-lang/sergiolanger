@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, MessageCircle, Send } from 'lucide-react';
-import { TranslationContent } from '../types';
+import { TranslationContent, ClientVIP } from '../types';
+import { captureWebsiteLead } from '../lib/firebase';
 
 interface ModalFormProps {
   isOpen: boolean;
@@ -21,28 +22,90 @@ export const ModalForm: React.FC<ModalFormProps> = ({
   const [role, setRole] = useState('incorporador');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      // after showing success, reset and close after a delay
-      setTimeout(() => {
-        setSubmitted(false);
-        onClose();
-      }, 2500);
-    }, 400);
+  const createLeadObject = (): ClientVIP => {
+    const now = new Date();
+    const dateStr = `${now.toISOString().slice(0, 10)} ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    const roleProfile =
+      role === 'incorporador'
+        ? 'Incorporador'
+        : role === 'gestor'
+        ? 'Empresário / C-Level'
+        : role === 'corretor'
+        ? 'Investidor Familiar'
+        : 'Comprador Final';
+
+    return {
+      id: `lead-geral-${Date.now()}`,
+      name: name.trim() || 'Contato via Site',
+      email: email.trim() || 'contato@site.com.br',
+      phone: phone.trim() || 'Não informado',
+      profile: roleProfile,
+      targetBudgetMin: 5000000,
+      targetBudgetMax: 20000000,
+      preferredNeighborhoods: ['São Paulo - SP'],
+      preferredTypes: ['Penthouse / Cobertura', 'Mansão Urbana'],
+      stage: 'lead_recebido',
+      assignedBroker: 'Sergio Langer',
+      estimatedDealValue: 12000000,
+      expectedCommission: 720000,
+      urgency: 'Alta',
+      liquidityStatus: '100% Líquido / À Vista',
+      notes: `Lead registrado via formulário de contato do site. Tema/Assunto: "${subject || 'Consultoria / Palestra'}". Segmento: ${role}. Mensagem: "${message.trim() || 'Solicitação de proposta'}"`,
+      tags: ['Site Institucional', 'Lead do Site', subject || 'Consultoria', role],
+      interactions: [
+        {
+          id: `int-${Date.now()}`,
+          date: dateStr,
+          type: 'note',
+          author: 'Site Institucional',
+          content: `Solicitação registrada sobre ${subject || 'Consultoria'}`,
+        },
+      ],
+      createdAt: now.toISOString().slice(0, 10),
+    };
   };
 
-  const handleDirectWhatsapp = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const lead = createLeadObject();
+      await captureWebsiteLead(lead);
+      setSubmitted(true);
+      setTimeout(() => {
+        setTimeout(() => {
+          setSubmitted(false);
+          onClose();
+        }, 3000);
+      }, 400);
+    } catch (err) {
+      console.warn('Fallback ao registrar contato:', err);
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDirectWhatsapp = async () => {
+    if (name.trim()) {
+      try {
+        const lead = createLeadObject();
+        lead.tags.push('WhatsApp Direto');
+        await captureWebsiteLead(lead);
+      } catch {}
+    }
     const encodedText = encodeURIComponent(
-      `Olá, meu nome é ${name || '[Seu Nome]'} e gostaria de informações sobre ${
+      `Olá Sergio Langer! Meu nome é ${name || '[Seu Nome]'} e gostaria de informações sobre ${
         subject || 'Consultoria / Palestra / Missão Alto Padrão'
       }.`
     );
-    window.open(`https://api.whatsapp.com/send?phone=5511999999999&text=${encodedText}`, '_blank');
+    window.open(`https://wa.me/5511998887766?text=${encodedText}`, '_blank');
   };
 
   return (
@@ -166,10 +229,11 @@ export const ModalForm: React.FC<ModalFormProps> = ({
               <div className="pt-3 space-y-3">
                 <button
                   type="submit"
-                  className="w-full bg-[#c8a24d] hover:bg-[#b8933e] text-black font-bold text-xs sm:text-sm tracking-[0.12em] uppercase py-3.5 px-6 transition-colors flex items-center justify-center space-x-2 cursor-pointer shadow"
+                  disabled={submitting}
+                  className="w-full bg-[#c8a24d] hover:bg-[#b8933e] text-black font-bold text-xs sm:text-sm tracking-[0.12em] uppercase py-3.5 px-6 transition-colors flex items-center justify-center space-x-2 cursor-pointer shadow disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{t.modal.submitBtn}</span>
+                  <span>{submitting ? 'Cadastrando no CRM...' : t.modal.submitBtn}</span>
                 </button>
 
                 <button

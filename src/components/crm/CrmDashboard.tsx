@@ -50,6 +50,9 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
     (c) => c.stage === 'proposta_due_diligence' || c.stage === 'fechamento_escritura'
   );
   const conversionRate = clients.length > 0 ? (advancedClients.length / clients.length) * 100 : 0;
+  const websiteLeadsCount = clients.filter((c) =>
+    c.tags?.some((t) => t.toLowerCase().includes('site'))
+  ).length;
 
   // Stages Count & Volume
   const stageStats = PIPELINE_STAGES.map((stage) => {
@@ -133,7 +136,10 @@ export const CrmDashboard: React.FC<CrmDashboardProps> = ({
             </div>
             <div className="flex items-center space-x-1.5 mt-2 text-xs text-emerald-400 font-medium">
               <ArrowUpRight className="w-3.5 h-3.5" />
-              <span>{clients.length} negociações ativas</span>
+              <span>{clients.length} negociações</span>
+              {websiteLeadsCount > 0 && (
+                <span className="text-amber-400 font-semibold">• {websiteLeadsCount} do site</span>
+              )}
             </div>
           </div>
         </div>

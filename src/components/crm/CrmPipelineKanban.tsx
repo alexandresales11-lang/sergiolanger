@@ -13,6 +13,7 @@ import {
   CheckCircle,
   GripVertical,
   Move,
+  Sparkles,
 } from 'lucide-react';
 import { ClientVIP, PipelineStageId, Property } from '../../types';
 import {
@@ -294,9 +295,17 @@ export const CrmPipelineKanban: React.FC<CrmPipelineKanbanProps> = ({
                           </div>
 
                           {/* Profile & Property Match */}
-                          <div className="text-[11px] text-neutral-400 mb-2.5 flex items-center space-x-1 pl-5">
-                            <User className="w-3 h-3 text-neutral-500 shrink-0" />
-                            <span className="truncate">{client.profile}</span>
+                          <div className="flex flex-wrap items-center gap-1.5 mb-2.5 pl-5">
+                            <div className="text-[11px] text-neutral-400 flex items-center space-x-1">
+                              <User className="w-3 h-3 text-neutral-500 shrink-0" />
+                              <span className="truncate">{client.profile}</span>
+                            </div>
+                            {client.tags?.some((t) => t.toLowerCase().includes('site')) && (
+                              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#c8a24d]/20 text-[#c8a24d] border border-[#c8a24d]/40 rounded">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>Lead do Site</span>
+                              </span>
+                            )}
                           </div>
 
                           {prop && (

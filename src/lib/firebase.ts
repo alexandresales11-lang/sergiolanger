@@ -107,17 +107,35 @@ export function cleanForFirestore<T>(obj: T): T {
 }
 
 /**
- * Salva ou atualiza um cliente no Firestore
+ * Salva ou atualiza um cliente no Firestore com sincronização garantida
  */
 export async function saveClientToFirestore(client: ClientVIP): Promise<void> {
   try {
     const cleaned = cleanForFirestore(client);
     const clientRef = doc(db, CLIENTS_COLLECTION, client.id);
     await setDoc(clientRef, cleaned, { merge: true });
+    console.log(`[Firestore] Cliente salvo na nuvem com sucesso: ${client.id} (${client.name})`);
+
+    // Sincroniza também no cache local imediato para consistência instantânea no CRM
+    try {
+      const saved = localStorage.getItem('sergio_langer_crm_clients');
+      const list: ClientVIP[] = saved ? JSON.parse(saved) : [];
+      const filtered = list.filter((c) => c.id !== client.id);
+      localStorage.setItem('sergio_langer_crm_clients', JSON.stringify([client, ...filtered]));
+    } catch (localErr) {
+      console.warn('Aviso ao sincronizar cache local:', localErr);
+    }
   } catch (err) {
     console.error('Erro ao salvar cliente no Firestore:', err);
     throw err;
   }
+}
+
+/**
+ * Registra um lead capturado diretamente do site público no Firestore e CRM
+ */
+export async function captureWebsiteLead(lead: ClientVIP): Promise<void> {
+  return saveClientToFirestore(lead);
 }
 
 /**
